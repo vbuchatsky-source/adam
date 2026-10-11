@@ -357,6 +357,27 @@ body{font-family:"Rubik","Varela Round","Segoe UI","Arial Hebrew",Arial,sans-ser
 /* challenge pool button */
 .btn.chal{background:#fff1e6;color:#c2410c;border:2px solid #fdba74;box-shadow:0 4px 0 #f8c79a}.btn.chal.zero{background:#f4f6fb;color:#7b8199;border-color:#dde2ee;box-shadow:0 4px 0 #dde2ee}
 
+/* ===== levelled stages (v6) ===== */
+.sdrow{display:inline-flex;align-items:center;gap:1px;direction:ltr;flex-wrap:nowrap}.sdrow svg.sd{width:19px;height:19px;flex:none}
+.sdsep{width:8px;flex:none}
+@media (max-width:430px){.sdrow svg.sd{width:16px;height:16px}.sdsep{width:5px}}
+.stgh{font-size:20px;margin:18px 0 8px}.stgh small{font-size:14px;color:var(--muted);font-weight:700}
+.stgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.stg{font:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px 10px;border-radius:22px;border:3px solid #e3e8f4;background:#fff;box-shadow:0 5px 0 #dfe5f3;cursor:pointer;position:relative;color:var(--ink,#2b2d42)}
+.stg .sico svg{width:44px;height:44px}.stg .snum{font-size:26px;line-height:1;margin-top:-2px;font-weight:900}
+.stg .slab{font-size:15px;font-weight:800;color:#5b6180}.stg .sn{font-size:12.5px;color:#7b8199}.stg .sst{font-size:14px;font-weight:900;margin-top:2px;color:#5b6180}
+.stg.earned{background:#effff9;border-color:#7fe0bd;box-shadow:0 5px 0 #b8ecd9}.stg.earned .sst{color:#0a8f6a}
+.stg.next{border-color:#ffbe0b;background:#fffbea;box-shadow:0 5px 0 #f2c94c}.stg.next .sst{color:#b7791f}
+.stg.k-dia{border-color:#bfe6fb}.stg.k-dia.earned{background:#eaf7ff;border-color:#38bdf8;box-shadow:0 5px 0 #a6dcf7}
+.stg.locked{opacity:.62;background:#f4f6fb;box-shadow:0 5px 0 #e3e8f4}
+.stgacts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:18px 0 6px}
+.rdots{display:flex;gap:7px;justify-content:center;margin:10px 0 4px;flex-wrap:wrap}.rdots i{width:16px;height:16px;border-radius:50%;background:#ffbe0b;box-shadow:inset 0 0 0 3px #e09a00}.rdots i.ok{background:#fdba74;box-shadow:inset 0 0 0 3px #f97316}
+.sumscore.stg7{font-size:96px}
+.pill svg.dia{width:20px;height:20px;vertical-align:-4px}
+#starCount{direction:ltr;unicode-bidi:isolate}
+.unit .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}.unit .acts .nBtn,.unit .acts .chBtn{grid-column:1/-1}.unit .acts .btn{text-align:center;justify-content:center}
+.sdrow{direction:rtl}.mrow{flex-direction:column;align-items:flex-start;gap:4px}
+
 </style>
 </head>
 <body>
@@ -365,7 +386,7 @@ body{font-family:"Rubik","Varela Round","Segoe UI","Arial Hebrew",Arial,sans-ser
   <div class="brand"><span class="rocket">🚀</span> אדם במסע <span><span class="lx">הצי</span><span class="ly">רים</span></span></div>
   <div class="spacer"></div>
   <button class="btn ghost small" id="rulesBtn">📘<span class="rtxt"> תזכורת</span></button>
-  <div class="pill" title="כוכבי שליטה שאספת (מתוך 70)"><span id="starIcon"></span><b id="starCount">0</b></div>
+  <div class="pill" title="כוכבים ויהלומים שאספת"><span id="starIcon"></span><b id="starCount">0</b></div>
   <button class="btn ghost small" id="soundBtn" title="צליל">🔊</button>
 </header>
 
@@ -476,6 +497,7 @@ const K=(...a)=>a.map(v=>Array.isArray(v)?'('+v.map(e=>Array.isArray(e)?'['+e+']
 function genUntil(f){for(let i=0;i<3000;i++){const r=f();if(r)return r;}throw new Error('generator failed');}
 const COLORS={A:'#8338ec',B:'#fb8500',C:'#06b38a',D:'#ff4d8d',E:'#3a86ff',P:'#8338ec',Q:'#fb8500',R:'#06b38a',S:'#ff4d8d',T:'#8338ec',K:'#e63946'};
 const STAR_PATH='M12 1.8l3.1 6.6 7.2.9-5.3 5 1.4 7.1L12 17.9l-6.4 3.5 1.4-7.1-5.3-5 7.2-.9z';
+const diaSvg=(on=true,cls='dia')=>`<svg class="${cls}" viewBox="0 0 24 24"><path d="M6 3h12l5 7-11 12L1 10z" fill="${on?'#38bdf8':'#e3e8f4'}" stroke="${on?'#0284c7':'#c9d1e3'}" stroke-width="1.3" stroke-linejoin="round"/>${on?'<path d="M1 10h22M9 3l-2 7 5 12 5-12-2-7" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="1" stroke-linejoin="round"/>':''}</svg>`;
 const starSvg=(fill='#ffbe0b',cls='star')=>`<svg class="${cls}" viewBox="0 0 24 24"><path d="${STAR_PATH}" fill="${fill}" stroke="${fill==='#ffbe0b'?'#e09a00':'#c9d1e3'}" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
 const checkSvg='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#2ec4b6"/><path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const TX=s=>`<span class="tx">${s}</span>`, TY=s=>`<span class="ty">${s}</span>`;
@@ -505,10 +527,9 @@ try{Object.assign(SAVE,JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){}
 try{if(!localStorage.getItem(KEY)){const o=JSON.parse(localStorage.getItem('adamCoords_v1')||'null');if(o){SAVE.stars=o.stars||0;SAVE.best=o.best==null?null:o.best;SAVE.perfect=o.perfect||0;}}}catch(e){}
 SAVE.units=SAVE.units||{};SAVE.lstep=SAVE.lstep||{};
 const MAST_KEYS=['1','2','3','4','5','6','7','8','9','ang'];
-const MAST_MAX=7;
-function masteryOfRec(r){const m=r&&Number.isFinite(+r.mast)?Math.floor(+r.mast):0;return Math.max(0,Math.min(MAST_MAX,m));}
-function masteryTotal(){let t=0;MAST_KEYS.forEach(k=>{t+=masteryOfRec(SAVE.units&&SAVE.units[k]);});return t;}
-function persist(){try{localStorage.setItem(KEY,JSON.stringify(SAVE));}catch(e){} const el=$('#starCount');if(el)el.textContent=masteryTotal()+'/'+(MAST_KEYS.length*MAST_MAX);}
+function sgOfRec(r){const a=r&&Array.isArray(r.sg)?r.sg:[];return Array.from({length:13},(_,i)=>a[i]?1:0);}
+function stageTotals(){let s=0,d=0;MAST_KEYS.forEach(k=>{const g=sgOfRec(SAVE.units&&SAVE.units[k]);for(let i=0;i<10;i++)s+=g[i];for(let i=10;i<13;i++)d+=g[i];});return[s,d];}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(SAVE));}catch(e){} const el=$('#starCount');if(el){const [s,d]=stageTotals();el.textContent=`${s} · ${d}💎`;}}
 function addStars(n){SAVE.stars+=n;persist();const p=$('#starCount').parentElement;p.classList.remove('shake');void p.offsetWidth;p.classList.add('shake');}
 
 /* ============ sound ============ */
@@ -1971,9 +1992,9 @@ const UNITS=[
   ['rectB',[2,5],[8,0],true],['rectVert',[2,3],[7,3],[7,8]],['rectVert',[1,1],[1,5],[6,5]],['rectLens',[1,2],[7,5]],['rectMC',[3,2],[8,2],[8,6]],['rectB',[1,7],[5,2],false],['tfRect',[[2,2],[9,2],[9,7]],[2,7],'D'],['rectDragTwo',[1,1],[6,4],[3,7],[7,7]],['rectLens',[-2,1],[3,7]],['rectMC',[-3,4],[-3,-1],[2,-1]]],[
   ['rectTwo',[3,5],[9,3],['D','B','A','C']],['rectTwo',[2,6],[7,1],['A','C','B','D']],['squareFrom',[2,3],4,1,1],['squareFrom',[7,5],3,-1,-1],['abc','sq'],['rectB',[-3,-2],[4,3],true],['tfRect',[[1,1],[5,1],[5,6]],[0,0],'sq'],['rectExample',3,5],['rectVert',[-3,-3],[2,-3],[2,4]],['rectDragTwo',[-2,4],[5,-1],[0,0],[8,8]]],[
   ['squareFrom',[-3,1],5,1,1],['rectB',[-4,6],[3,-2],false],['rectTwo',[-2,-3],[6,4],['C','A','B','D']],['abc','four'],['rectExample',2,6],['tfRect',[[2,3],[8,3],[8,-2]],[8,3],'D'],['rectMC',[-4,-2],[1,-2],[1,5]],['rectLens',[-4,-3],[5,2]],['squareFrom',[5,6],4,-1,-1],['rectVert',[0,-4],[0,3],[-5,3]]]]},
-{id:9,icon:'trophy',title:'מבחן סיום',sub:'15 שאלות מכל היחידות ביחד',ex:'כל החומר',
- today:'זה מבחן הסיום: 15 שאלות מכל מה שלמדנו, מכל היחידות. אתה מוכן – רובי מאמין בך!',
- lesson:[I(`ברוך הבא ל<b>מבחן הסיום</b>, אדם! 🎓 יש בו 15 שאלות מכל היחידות שלמדנו, מהקל לקשה. כמו תמיד: רמז עדין אם טועים ועוד ניסיון, ורק תשובה נכונה בניסיון הראשון נספרת לציון (מתוך 100). בכל פעם השאלות שונות! ✨`,exploreDrag('A',3,4))],
+{id:9,icon:'trophy',title:'מבחן סיום',sub:'שאלות מכל היחידות ביחד – 13 שלבים',ex:'כל החומר',
+ today:'זה מבחן הסיום: שאלות מכל מה שלמדנו, מכל היחידות, בשלבים מהקל לקשה. אתה מוכן – רובי מאמין בך!',
+ lesson:[I(`ברוך הבא ל<b>מבחן הסיום</b>, אדם! 🎓 יש בו שאלות מכל היחידות שלמדנו, בשלבים מהקל לקשה: 10 כוכבים ו-3 יהלומים. כמו תמיד: רמז עדין אם טועים ועוד ניסיון, ורק שלב שבו כל התשובות נכונות בניסיון הראשון נחשב! ✨`,exploreDrag('A',3,4))],
  sets:null}];
 
 /* v5: multi-select ("select all that apply") questions added to the medium/hard sets of the coordinate units */
@@ -2048,11 +2069,41 @@ function buildTopicBank(u){
     while(need>0&&tries++<4000){const spec=slots[tries%slots.length];const t=TPL[spec[0]];
       try{const a=(t.rv?t.rv(...spec.slice(1)):t.r());const q=t.b(...a);if(q&&q.key&&!keys.has(q.key)){keys.add(q.key);out.push({u,lvl,tpl:spec[0],args:a,key:q.key});need--;}}catch(e){}}}
   return out;}
+/* ---- difficulty: every bank gets a deterministic total order (rank 1 = easiest ... 100 = hardest).
+   Primary key = the authored level (easy / medium / hard); secondary key = a "fine" score computed from the question's features. ---- */
+function fineScore(q,e){let f=0;const k=q.kind;
+  f+=k==='mc'?(q.tf?0:1):k==='tap'?1.4:k==='drag'?2:k==='num'?1.6+.5*((q.nf||1)-1):k==='multi'?3.2:1.5;
+  if(q.neg)f+=.5;
+  if(k==='multi')f+=.35*(q.options||[]).filter(o=>o.correct).length+.1*(q.options||[]).length;else if(q.options)f+=.1*q.options.length;
+  const b=q.board;if(b){if((b.ux||1)>1||(b.uy||1)>1)f+=.8;if(b.nums===false)f+=1.2;if((b.lx||1)>1||(b.ly||1)>1)f+=.4;if(b.qx!=null||b.qy!=null)f+=.4;}
+  const sp=q.angle;if(sp){f+=.35*sp.arcs.length+.1*Object.keys(sp.pts).length;if(sp.meta&&sp.meta.extra)f+=.6*Object.keys(sp.meta.extra).length;}
+  f+=Math.min(1.5,String(q.prompt||'').replace(/<[^>]+>/g,'').length/160);
+  if(/twoPos|estim|unl|Composed|wholeNames|notName|sameTwo|eqMulti|nameMulti|sumMiss|Multi$/.test(e.tpl))f+=1;
+  return f+(hashStr(e.key)%1000)/1e5;}
+function rankBank(arr){
+  arr.forEach(e=>{let q=null;try{q=makeQ(e);}catch(x){}e.fine=q?fineScore(q,e):99;});
+  const sorted=arr.slice().sort((x,y)=>x.lvl-y.lvl||x.fine-y.fine||hashStr(x.key)-hashStr(y.key));
+  sorted.forEach((e,i)=>{e.rank=i+1;});return sorted;}
+/* the final exam (topic 9): 100 questions taken evenly from the 8 coordinate topics (same 33/34/33 split, spread across each topic's difficulty range) */
+function buildExamBank(){
+  const src=UNITS.slice(0,8).map(x=>getBank(x.id));const used=new Set();const out=[];
+  for(let lvl=0;lvl<3;lvl++){const lists=src.map(b=>b.filter(e=>e.lvl===lvl));const quota=LV_QUOTA[lvl];
+    const base=Math.floor(quota/lists.length),extra=quota-base*lists.length;
+    const order=lists.map((_,i)=>i).sort((i,j)=>hashStr('exam'+lvl+i)-hashStr('exam'+lvl+j));
+    order.forEach((ui,pos)=>{const L=lists[ui];const cnt=base+(pos<extra?1:0);
+      for(let k=0;k<cnt;k++){let idx=cnt>1?Math.round(k*(L.length-1)/(cnt-1)):Math.floor(L.length/2);let tries=0;
+        while(tries<L.length&&(used.has(L[(idx+tries)%L.length].key)))tries++;
+        const e=L[(idx+tries)%L.length];if(e&&!used.has(e.key)){used.add(e.key);out.push(Object.assign({},e));}}});}
+  return rankBank(out);}
 function getBank(u){
   if(BANKS[u])return BANKS[u];
-  if(u===9){{const seen=new Set();BANKS[9]=[].concat(...UNITS.slice(0,8).map(x=>getBank(x.id))).filter(e=>!seen.has(e.key)&&seen.add(e.key));}return BANKS[9];}
-  if(u==='mix'){BANKS.mix=getBank(9);return BANKS.mix;}
-  BANKS[u]=withSeed(hashStr('bank:'+u+':v5'),()=>buildTopicBank(u));return BANKS[u];}
+  if(u===9){BANKS[9]=buildExamBank();return BANKS[9];}
+  if(u==='mix'){const seen=new Set();BANKS.mix=[].concat(...UNITS.slice(0,8).map(x=>getBank(x.id)),getBank('ang')).filter(e=>!seen.has(e.key)&&seen.add(e.key));return BANKS.mix;}
+  BANKS[u]=rankBank(withSeed(hashStr('bank:'+u+':v5'),()=>buildTopicBank(u)));return BANKS[u];}
+/* ---- stages: 10 star stages x 7 questions (ranks 1-70) + 3 diamond stages x 10 questions (ranks 71-100) ---- */
+const STAGES=Array.from({length:13},(_,i)=>i<10?{i,kind:'star',n:7,from:i*7,to:i*7+7,num:i+1}:{i,kind:'dia',n:10,from:70+(i-10)*10,to:80+(i-10)*10,num:i-9});
+const STAGE_LABELS=['קל מאוד','קל מאוד','קל','קל','קל+','בינוני','בינוני','בינוני+','מאתגר','מאתגר','קשה','קשה מאוד','אתגר האלופים'];
+const stageEntries=(u,i)=>getBank(u).slice(STAGES[i].from,STAGES[i].to);
 /* a question is rebuilt from its entry with a seed derived from its id, so it always looks exactly the same (options order, distractors) */
 function makeQ(e){let q=null,err=null;for(let i=0;i<80&&!q;i++){try{q=withSeed(hashStr('q:'+e.key+':'+i),()=>TPL[e.tpl].b(...e.args));}catch(x){err=x;}}if(!q)throw err;q.id=e.key;q.unit=e.u;q.lvl=e.lvl;q.tpl=e.tpl;q.entry=e;return q;}
 /* choose n entries; for mixed topics (final exam / big challenge) spread them over different units */
@@ -2107,24 +2158,32 @@ $('#rulesBtn').onclick=()=>modal(RULES);
 $('#homeMascot').innerHTML=ROBO;$('#hubMascot').innerHTML=ROBO;
 
 /* ============ progress model (v3: nothing is locked; one practice session per topic, score out of 100) ============ */
-const US=u=>{if(!SAVE.units[u]||typeof SAVE.units[u]!=='object')SAVE.units[u]={lesson:false,best:null,last:null,n:0,mast:0,extra:0};const x=SAVE.units[u];if(!Number.isFinite(+x.mast))x.mast=0;if(!Number.isFinite(+x.extra))x.extra=0;if(x.best===undefined)x.best=null;if(x.last===undefined)x.last=null;if(x.n===undefined)x.n=0;return x;};
+const US=u=>{if(!SAVE.units[u]||typeof SAVE.units[u]!=='object')SAVE.units[u]={lesson:false,best:null,last:null,n:0,sg:[],sb:[]};const x=SAVE.units[u];if(!Array.isArray(x.sg))x.sg=[];if(!Array.isArray(x.sb))x.sb=[];if(x.best===undefined)x.best=null;if(x.last===undefined)x.last=null;if(!Number.isFinite(+x.n))x.n=0;return x;};
 const lessonDone=u=>!!(SAVE.units[u]&&SAVE.units[u].lesson);
 const bestOf=u=>{const r=SAVE.units[u];return r&&typeof r.best==='number'?r.best:null;};
 const lastOf=u=>{const r=SAVE.units[u];return r&&typeof r.last==='number'?r.last:null;};
 const getU=u=>u==='ang'?ANGU:u==='mix'?null:UNITS[u-1];
 const unitOpen=()=>true;
-const starsW=m=>m===1?'כוכב אחד':m+' כוכבים';
-const masteryOf=u=>masteryOfRec(SAVE.units[u]);
-const isDone=u=>masteryOf(u)>=MAST_MAX;
-const extraOf=u=>{const r=SAVE.units[u];return r&&Number.isFinite(+r.extra)?Math.max(0,Math.floor(+r.extra)):0;};
-const totalMastery=()=>masteryTotal();
+/* ---- levelled stages: 10 star stages (7 questions) + 3 diamond stages (10 questions) per topic ---- */
+const sgOf=u=>sgOfRec(SAVE.units[u]);
+const earned=(u,i)=>!!sgOf(u)[i];
+const starsOf=u=>sgOf(u).slice(0,10).reduce((a,b)=>a+b,0);
+const diasOf=u=>sgOf(u).slice(10).reduce((a,b)=>a+b,0);
+const stagesOf=u=>starsOf(u)+diasOf(u);
+const isDone=u=>starsOf(u)===10&&diasOf(u)===3;
+const stageOpen=(u,i)=>i<10||starsOf(u)>=10;            /* the ONLY gate: diamonds need all 10 stars */
+const nextStage=u=>{const g=sgOf(u);let i=g.slice(0,10).indexOf(0);if(i>=0)return i;i=g.slice(10).indexOf(0);return i>=0?10+i:null;};
+const bestStage=(u,i)=>{const r=SAVE.units[u];const v=r&&Array.isArray(r.sb)?+r.sb[i]:0;return Number.isFinite(v)?v:0;};
+const stageName=i=>i<10?`⭐ שלב ${i+1}`:`💎 יהלום ${i-9}`;
+const totalStars=()=>stageTotals()[0],totalDias=()=>stageTotals()[1];
 const scoreFor=(c,n)=>Math.round(c/(n||SESSION_N)*100);
 const TOPICS=UNITS.concat([ANGU]);const numOf=u=>u==='ang'?10:u;
-const practicedCount=()=>TOPICS.filter(x=>bestOf(x.id)!=null).length;
+const topicTitle=u=>u==='ang'?'זוויות':getU(u).title;
+const triedAny=u=>{const r=SAVE.units[u];return !!r&&((+r.n||0)>0||stagesOf(u)>0);};
+const practicedCount=()=>TOPICS.filter(x=>triedAny(x.id)).length;
 const doneCount=()=>TOPICS.filter(x=>isDone(x.id)).length;
-const avgScore=()=>Math.round(TOPICS.reduce((s,x)=>s+(bestOf(x.id)||0),0)/TOPICS.length);
-/* recommended next topic: first topic (book order) never practiced; otherwise the unfinished topic with the fewest stars (ties: book order); null when all 7-star badges are collected */
-const recommended=()=>{let x=TOPICS.find(x=>bestOf(x.id)==null&&!isDone(x.id));if(!x){const open=TOPICS.filter(x=>!isDone(x.id));if(open.length){const mn=Math.min(...open.map(x=>masteryOf(x.id)));x=open.find(x=>masteryOf(x.id)===mn);}}return x?x.id:null;};
+/* recommended = the topic Adam played last (if not finished), otherwise the first unfinished topic in book order; null when everything is complete */
+const recommended=()=>{const L=SAVE.lastU;if(L!=null&&TOPICS.some(x=>String(x.id)===String(L))&&!isDone(L))return parseU(String(L));const x=TOPICS.find(x=>!isDone(x.id));return x?x.id:null;};
 const parseU=s=>(s==='ang'||s==='mix')?s:+s;
 function migrateSave(){
   try{
@@ -2141,17 +2200,20 @@ function migrateSave(){
       if(typeof SAVE.best==='number'&&!SAVE.units.mix)SAVE.units.mix={lesson:false,best:SAVE.best<=10?SAVE.best*10:Math.min(100,SAVE.best),last:null,n:0};
       SAVE.ver=3;
     }
-    /* v4: 7-star mastery. Old saves: a best score of 100 counts as ONE star at most; everything else starts at 0 */
+    /* v5: levelled stages. Old 7-star counts become the first N star stages (cap 7); anything unreadable starts empty */
     Object.keys(SAVE.units).forEach(u=>{const r=SAVE.units[u];if(!r||typeof r!=='object')return;
-      if(!Number.isFinite(+r.mast)||r.mast<0)r.mast=(r.best===100&&SAVE.ver<4)?1:0;r.mast=Math.max(0,Math.min(MAST_MAX,Math.floor(+r.mast)));
-      if(!Number.isFinite(+r.extra)||r.extra<0)r.extra=0;});
-    SAVE.ver=4;
-  }catch(e){SAVE.ver=4;SAVE.seen=SAVE.seen||{};}
+      if(!Array.isArray(r.sg)){const m=Math.max(0,Math.min(7,Math.floor(+r.mast)||0));r.sg=Array.from({length:13},(_,i)=>i<m?1:0);}
+      r.sg=Array.from({length:13},(_,i)=>r.sg[i]?1:0);if(r.sg.slice(0,10).some(x=>!x))for(let i=10;i<13;i++)r.sg[i]=0;
+      if(!Array.isArray(r.sb))r.sb=[];r.sb=Array.from({length:13},(_,i)=>{const v=Math.floor(+r.sb[i]);return Number.isFinite(v)&&v>0?Math.min(v,i<10?7:10):0;});
+      if(!Number.isFinite(+r.n)||r.n<0)r.n=0;});
+    if(SAVE.lastU!=null&&!['1','2','3','4','5','6','7','8','9','ang'].includes(String(SAVE.lastU)))delete SAVE.lastU;
+    SAVE.ver=5;
+  }catch(e){SAVE.ver=5;SAVE.seen=SAVE.seen||{};}
 }
 migrateSave();
 const st3=n=>[0,1,2].map(i=>starSvg(i<n?'#ffbe0b':'#e6ebf5')).join('');
-function continueTarget(){const r=recommended();if(r==null)return{kind:'mix'};return{kind:(!lessonDone(r)&&bestOf(r)==null)?'lesson':'practice',u:r};}
-function go(t){if(!t||t.kind==='mix')return startPractice('mix');if(t.kind==='lesson')openLesson(t.u,true);else startPractice(t.u);}
+function continueTarget(){const r=recommended();if(r==null)return{kind:'mix'};if(!lessonDone(r)&&!triedAny(r))return{kind:'lesson',u:r};return{kind:'stage',u:r,i:nextStage(r)};}
+function go(t){if(!t||t.kind==='mix')return startPractice('mix');if(t.kind==='lesson')openLesson(t.u,true);else startStage(t.u,t.i);}
 
 /* ============ HOME / PLAN ============ */
 const ICONS={
@@ -2166,45 +2228,63 @@ const ICONS={
  angle:`<svg viewBox="0 0 86 86"><path d="M14 70L70 70L52 16z" fill="#8338ec22"/><path d="M70 70L14 70M14 70L56 14" stroke="#3aa0ff" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M14 70L46 70A32 32 0 0 0 36.5 47.4Z" fill="#fb8500" fill-opacity=".7" stroke="#fb8500" stroke-width="2"/><circle cx="14" cy="70" r="6" fill="#fff" stroke="#2b2d42" stroke-width="3"/></svg>`,
  trophy:`<svg viewBox="0 0 86 86"><path d="M26 14h34v16a17 17 0 0 1-34 0z" fill="#ffbe0b" stroke="#e09a00" stroke-width="3"/><path d="M26 20H14a12 12 0 0 0 14 16M60 20h12a12 12 0 0 1-14 16" fill="none" stroke="#e09a00" stroke-width="4"/><rect x="38" y="46" width="10" height="14" fill="#e09a00"/><rect x="26" y="60" width="34" height="10" rx="4" fill="#5b5f97"/><path d="M43 20l2.6 5.3 5.8.8-4.2 4 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.2-4 5.8-.8z" fill="#fff"/></svg>`,
  lab:`<svg viewBox="0 0 86 86"><path d="M34 14h18M38 14v20L22 64a8 8 0 0 0 7 11h28a8 8 0 0 0 7-11L48 34V14" fill="#e0fbff" stroke="#3a86ff" stroke-width="4" stroke-linejoin="round"/><path d="M27 56h32l5 9a5 5 0 0 1-4 7H26a5 5 0 0 1-4-7z" fill="#06d6a0"/><circle cx="38" cy="50" r="3" fill="#06d6a0"/><circle cx="47" cy="44" r="2.5" fill="#06d6a0"/></svg>`};
-function heroMessage(){const r=recommended();const d=doneCount(),t=totalMastery();
-  const base=`אני <b>רובי</b>! 🤖 <b>הכל פתוח</b> – אפשר להיכנס לכל נושא מתי שבא לך! הסדר המומלץ הוא <b>1 ← 10</b>, אבל אתה בוחר.<br>בכל תרגול יש <b>15 שאלות</b> והציון הוא <b>מתוך 100</b>. טעית? אין בעיה – יש רמז ועוד ניסיון! 💪<br>⭐ <b>כוכב</b> מקבלים רק על ציון <b>100</b> (כל 15 נכונות בניסיון הראשון). בכל נושא אפשר לאסוף <b>7 כוכבים</b> ולקבל גביע 🏆`;
-  if(r==null)return base+`<br>🏆 וואו אדם! השלמת את כל 10 הנושאים – ${t} כוכבים מתוך ${MAST_KEYS.length*MAST_MAX}! אפשר להמשיך לתרגל באתגר הגדול.`;
-  const U=getU(r);const m=masteryOf(r);return base+`<br><b>מומלץ עכשיו:</b> נושא ${numOf(r)} – ${U.title}${m?` (יש לך ${starsW(m)} מתוך 7)`:''}. ${d?`כבר השלמת ${d} נושאים – אלוף!`:'בוא נתחיל! 👇'}`;}
-const m7=(n,cls)=>`<span class="m7 ${cls||''}" aria-label="${n} כוכבים מתוך 7">${Array.from({length:MAST_MAX},(_,i)=>starSvg(i<n?'#ffbe0b':'#e3e8f4')).join('')}</span>`;
-function cardHTML(x,cls,withNum){const u=x.id;const b=bestOf(u),l=lastOf(u),rec=recommended()===u;const m=masteryOf(u),dn=isDone(u),ex=extraOf(u);
-  const sc=b==null?`<span class="sc none">עוד לא תרגלת – בוא ננסה! 🌱</span>`:`<span class="sc"><b class="bestn">השיא: ${b}/100</b>${l!=null&&l!==b?` <small>· אחרון: ${l}</small>`:''}</span>`;
-  const mt=dn?`<span class="mline gold">🏆 הושלם! 7/7 כוכבים${ex?` · ועוד ${ex} תרגולים מושלמים ✨`:''}</span>`:`<span class="mline">${m===1?'כוכב אחד':m} מתוך 7${m===1?'':' כוכבים'}${m?'':' – כוכב על כל 100!'}</span>`;
-  return `<div class="${cls} ${b===100?'done':''} ${dn?'mastered':''} ${rec?'next':''}" data-u="${u}" role="button" tabindex="0">
+function heroMessage(){const r=recommended();const d=doneCount(),ts=totalStars(),td=totalDias();
+  const base=`אני <b>רובי</b>! 🤖 <b>הכל פתוח</b> – אפשר להיכנס לכל נושא ולכל שלב כוכב מתי שבא לך!<br>בכל נושא: <b>10 שלבי כוכב ⭐</b> של 7 שאלות (מהקל לקשה) ואחריהם <b>3 שלבי יהלום 💎</b> של 10 שאלות קשות. כדי להשיג שלב צריך לענות נכון על <b>כל</b> השאלות בניסיון הראשון. טעית? יש רמז ועוד ניסיון, ואז מנסים שוב את השלב! 💪`;
+  if(r==null)return base+`<br>🏆 וואו אדם! השלמת את כל 10 הנושאים – ${ts} כוכבים ו-${td} יהלומים! אפשר להמשיך באתגר הגדול.`;
+  const U=getU(r);const nx=nextStage(r);return base+`<br><b>מומלץ עכשיו:</b> נושא ${numOf(r)} – ${U.title}${nx==null?'':` · ${stageName(nx)}`}. ${d?`כבר השלמת ${d} נושאים – אלוף!`:'בוא נתחיל! 👇'}`;}
+const sdRow=u=>{const g=sgOf(u);return `<span class="sdrow" aria-label="${starsOf(u)} כוכבים ו-${diasOf(u)} יהלומים">${g.slice(0,10).map(x=>starSvg(x?'#ffbe0b':'#e3e8f4','sd')).join('')}<span class="sdsep"></span>${g.slice(10).map(x=>diaSvg(!!x,'sd')).join('')}</span>`;};
+function cardHTML(x,cls,withNum){const u=x.id;const rec=recommended()===u;const s=starsOf(u),d=diasOf(u),dn=isDone(u),nx=nextStage(u);
+  const mt=dn?`<span class="mline gold">🏆 הושלם! 10 כוכבים ו-3 יהלומים</span>`:`<span class="mline">⭐ ${s}/10 · 💎 ${d}/3${s===0&&d===0?' – נתחיל מהשלב הראשון!':''}</span>`;
+  const nextBtn=nx==null?`<button class="btn green nBtn" data-u="${u}">🔁 תרגול חוזר</button>`:`<button class="btn green nBtn" data-u="${u}">▶ השלב הבא: ${stageName(nx)}</button>`;
+  return `<div class="${cls} ${dn?'mastered done':''} ${rec?'next':''}" data-u="${u}" role="button" tabindex="0">
     ${dn?'<span class="badge-start badge-done">🏆 הושלם</span>':rec?'<span class="badge-start">מומלץ עכשיו</span>':''}${withNum?`<span class="num">${numOf(u)}</span>`:''}<span class="ic">${ICONS[x.icon]}</span>
-    <span class="ubody"><h3>${x.title}</h3><p>${x.sub}</p><span class="ex">📘 ${x.ex}</span>${sc}
-      <span class="mrow">${m7(m,dn?'gold':'')}${mt}</span>
-      <span class="acts"><button class="btn green pBtn" data-u="${u}">▶ תרגול</button><button class="btn ghost lBtn" data-u="${u}">${lessonDone(u)?'📖 הסבר ✓':'📖 הסבר'}</button><button class="btn chal chBtn ${chalCount(u)?'':'zero'}" data-u="${u}">🔥 היה מאתגר (${chalCount(u)})</button></span></span></div>`;}
+    <span class="ubody"><h3>${x.title}</h3><p>${x.sub}</p><span class="ex">📘 ${x.ex}</span>
+      <span class="mrow">${sdRow(u)}${mt}</span>
+      <span class="acts">${nextBtn}<button class="btn sBtn" data-u="${u}">🗂️ כל השלבים</button><button class="btn ghost lBtn" data-u="${u}">${lessonDone(u)?'📖 הסבר ✓':'📖 הסבר'}</button><button class="btn chal chBtn ${chalCount(u)?'':'zero'}" data-u="${u}">🔥 היה מאתגר (${chalCount(u)})</button></span></span></div>`;}
 function bindCards(root){
   root.querySelectorAll('[data-u]').forEach(c=>{
-    c.onclick=e=>{if(e.target.closest('button'))return;startPractice(parseU(c.dataset.u));};
-    c.onkeydown=e=>{if(e.key==='Enter'&&e.target===c)startPractice(parseU(c.dataset.u));};});
-  root.querySelectorAll('.pBtn').forEach(b=>b.onclick=e=>{e.stopPropagation();startPractice(parseU(b.dataset.u));});
+    c.onclick=e=>{if(e.target.closest('button'))return;openStages(parseU(c.dataset.u));};
+    c.onkeydown=e=>{if(e.key==='Enter'&&e.target===c)openStages(parseU(c.dataset.u));};});
+  root.querySelectorAll('.nBtn').forEach(b=>b.onclick=e=>{e.stopPropagation();startNext(parseU(b.dataset.u));});
+  root.querySelectorAll('.sBtn').forEach(b=>b.onclick=e=>{e.stopPropagation();openStages(parseU(b.dataset.u));});
   root.querySelectorAll('.chBtn').forEach(b=>b.onclick=e=>{e.stopPropagation();startChallenge(parseU(b.dataset.u));});
   root.querySelectorAll('.lBtn').forEach(b=>b.onclick=e=>{e.stopPropagation();const u=parseU(b.dataset.u);openLesson(u,!lessonDone(u));});
 }
 function renderHome(){
-  const p=practicedCount(),d=doneCount(),t=totalMastery(),avg=avgScore(),r=recommended();
+  const p=practicedCount(),d=doneCount(),ts=totalStars(),td=totalDias(),r=recommended();
   $('#heroSay').innerHTML=heroMessage();
-  $('#stats').innerHTML=`<span class="pill">${starSvg()} כוכבים: ${t}/${MAST_KEYS.length*MAST_MAX}</span><span class="pill">🏆 נושאים שהושלמו: ${d}/10</span><span class="pill">🎯 ציון ממוצע: ${avg}</span>`;
-  $('#planSub').innerHTML=`הכל פתוח! 🔓 תבחר נושא מתי שאתה רוצה. <b>סדר מומלץ: 1 ← 10</b>. ⭐ כוכב על כל תרגול עם ציון 100 – 7 כוכבים = גביע 🏆`;
-  $('#pbarTxt').innerHTML=`<b>🏆 הושלמו ${d} מתוך 10 נושאים</b> · ⭐ <b>${t} כוכבים מתוך ${MAST_KEYS.length*MAST_MAX}</b>${r?` · מומלץ עכשיו: <b>נושא ${numOf(r)}</b>`:' · 🎉 כל הנושאים הושלמו!'}`;
-  $('#pbar').innerHTML=TOPICS.map(x=>{const m=masteryOf(x.id);return `<i class="s${m>=MAST_MAX?3:m>=4?2:m>=1?1:0} ${x.id===r?'cur':''}" title="נושא ${numOf(x.id)}: ${m}/7 כוכבים"></i>`;}).join('');
+  $('#stats').innerHTML=`<span class="pill">${starSvg()} כוכבים: ${ts}/100</span><span class="pill">${diaSvg(true,'dia')} יהלומים: ${td}/30</span><span class="pill">🏆 הושלמו: ${d}/10</span>`;
+  $('#planSub').innerHTML=`הכל פתוח! 🔓 בחר נושא ושלב מתי שאתה רוצה. <b>סדר מומלץ: 1 ← 10</b>. ⭐ 10 כוכבים בכל נושא פותחים 💎 3 יהלומים.`;
+  $('#pbarTxt').innerHTML=`<b>🏆 הושלמו ${d} מתוך 10 נושאים</b> · ⭐ <b>${ts} מתוך 100</b> · 💎 <b>${td} מתוך 30</b>${r?` · מומלץ עכשיו: <b>נושא ${numOf(r)}</b>`:' · 🎉 הכל הושלם!'}`;
+  $('#pbar').innerHTML=TOPICS.map(x=>{const m=stagesOf(x.id);return `<i class="s${m>=13?3:m>=5?2:m>=1?1:0} ${x.id===r?'cur':''}" title="נושא ${numOf(x.id)}: ⭐ ${starsOf(x.id)}/10 · 💎 ${diasOf(x.id)}/3"></i>`;}).join('');
   const ct=continueTarget();
-  $('#contBtn').textContent=ct.kind==='mix'?'🏆 לאתגר הגדול':ct.kind==='lesson'?`▶ המשך מהמקום שעצרתי – נתחיל בהסבר קצר (נושא ${numOf(ct.u)})`:`▶ המשך מהמקום שעצרתי – תרגול נושא ${numOf(ct.u)}`;
+  $('#contBtn').textContent=ct.kind==='mix'?'🏆 לאתגר הגדול':ct.kind==='lesson'?`▶ המשך מהמקום שעצרתי – נתחיל בהסבר קצר (נושא ${numOf(ct.u)})`:`▶ המשך מהמקום שעצרתי – נושא ${numOf(ct.u)}, ${stageName(ct.i)}`;
   $('#contBtn').onclick=()=>go(ct);
   $('#units').innerHTML=TOPICS.map(x=>cardHTML(x,'unit',true)).join('');
   bindCards($('#units'));
   const mb=bestOf('mix');
-  $('#extras').innerHTML=`<button class="mission big" id="goQuiz"><span class="ic">${ICONS.trophy}</span><span><h3>האתגר הגדול – 15 שאלות</h3><p>שאלות מכל הנושאים ביחד. כל תשובה נכונה בניסיון הראשון מקדמת את הציון (מתוך 100). ${mb==null?'':`השיא שלך: <b class="co">${mb}/100</b>`}</p></span></button>
+  $('#extras').innerHTML=`<button class="mission big" id="goQuiz"><span class="ic">${ICONS.trophy}</span><span><h3>האתגר הגדול – 15 שאלות</h3><p>שאלות מעורבות מכל הנושאים. כל תשובה נכונה בניסיון הראשון מקדמת את הציון (מתוך 100). ${mb==null?'':`השיא שלך: <b class="co">${mb}/100</b>`}</p></span></button>
     <button class="mission" id="goLab"><span class="ic">${ICONS.lab}</span><span><h3>מגרש החקירות</h3><p>גרור נקודות בחופשיות וגלה בעצמך!</p></span></button>`;
   $('#goLab').onclick=openSandbox;$('#goQuiz').onclick=()=>startPractice('mix');
 }
-function openUnit(u){startPractice(u);}
+/* ============ STAGE PICKER (one per topic): all 13 stages with difficulty label and state ============ */
+let HUB=null;
+function openStages(u){HUB=u;show('unit');renderStages();}
+function renderStages(){const u=HUB,U=getU(u);const s=starsOf(u),d=diasOf(u),nx=nextStage(u);
+  $('#hubMascot').innerHTML=ROBO;$('#hubNum').textContent=`נושא ${numOf(u)}`;$('#hubTitle').textContent=U.title;
+  $('#hubSay').innerHTML=isDone(u)?`🏆 <b>הושלם!</b> אספת את כל 10 הכוכבים ואת 3 היהלומים. אפשר לתרגל כל שלב שוב.`:`⭐ ${s} מתוך 10 · 💎 ${d} מתוך 3. השאלות עולות בקושי משלב לשלב. כדי להשיג שלב צריך לענות נכון על <b>כל</b> השאלות בניסיון הראשון. ${s<10?'💎 היהלומים נפתחים אחרי 10 כוכבים.':''}`;
+  const tile=i=>{const S=STAGES[i];const ok=earned(u,i),open=stageOpen(u,i),isNext=nx===i,b=bestStage(u,i);
+    const state=ok?'✓ הושג':!open?`🔒 צריך 10 כוכבים`:isNext?'▶ השלב הבא':b?`שיא: ${b}/${S.n}`:'פתוח';
+    return `<button class="stg k-${S.kind} ${ok?'earned':''} ${isNext?'next':''} ${open?'':'locked'}" data-i="${i}" aria-label="${stageName(i)}"><span class="sico">${S.kind==='star'?starSvg(ok?'#ffbe0b':'#e3e8f4','sg'):diaSvg(ok,'sg')}</span><b class="snum">${S.kind==='star'?S.num:S.num}</b><span class="slab">${STAGE_LABELS[i]}</span><small class="sn">${S.n} שאלות</small><span class="sst">${state}</span></button>`;};
+  $('#hubSteps').innerHTML=`<h3 class="stgh">⭐ שלבי כוכב – 7 שאלות בכל שלב</h3><div class="stgrid">${Array.from({length:10},(_,i)=>tile(i)).join('')}</div>
+    <h3 class="stgh">💎 שלבי יהלום – 10 שאלות קשות ${s<10?'<small>(נפתחים אחרי 10 כוכבים)</small>':''}</h3><div class="stgrid dg">${[10,11,12].map(tile).join('')}</div>
+    <div class="stgacts"><button class="btn ghost" id="hubLesson">${lessonDone(u)?'📖 הסבר ✓':'📖 הסבר'}</button><button class="btn chal ${chalCount(u)?'':'zero'}" id="hubChal">🔥 היה מאתגר (${chalCount(u)})</button></div>`;
+  $('#hubSteps').querySelectorAll('.stg').forEach(b=>b.onclick=()=>startStage(u,+b.dataset.i));
+  $('#hubLesson').onclick=()=>openLesson(u,!lessonDone(u));$('#hubChal').onclick=()=>startChallenge(u);
+}
+$('#hubBack').onclick=()=>show('home');
+function openUnit(u){openStages(u);}
+function lockedMsg(u){const left=10-starsOf(u);modal(`<div class="mascot" style="margin:0 auto;width:90px;height:96px">${ROBO}</div><h2>💎 היהלומים עוד נעולים</h2><p style="font-size:19px;line-height:1.6">כדי לפתוח את שלבי היהלום צריך להשיג את כל <b>10 הכוכבים</b> בנושא הזה. נשארו עוד <b>${left}</b> כוכבים – אתה בדרך! ⭐</p><button class="btn green" onclick="closeModal()">הבנתי 👍</button>`);}
 
 /* ============ LESSONS ============ */
 let LS=null;
@@ -2234,11 +2314,10 @@ $('#lPrev').onclick=()=>{if(LS.i>0){LS.i--;renderStep();}};
 $('#lNext').onclick=()=>{if(!LS.done)return;const U=LS.unit;if(LS.i<U.lesson.length-1){LS.i++;renderStep();return;}
   const rec=US(U.id);const first=!rec.lesson;rec.lesson=true;delete SAVE.lstep[U.id];persist();sfx('win');confetti(2200,110);
   modal(`<div class="mascot mood-happy" style="margin:0 auto;width:110px;height:118px">${ROBO}</div><h2>סיימת את השיעור, אדם! 🎉</h2>
-  <div class="sumstars">${starSvg('#ffbe0b','pop')}${starSvg('#ffbe0b','pop')}${starSvg('#ffbe0b','pop')}</div>
-  <p style="font-size:20px">${first?'קיבלת 3 כוכבים!':'כבר יש לך את הכוכבים של השיעור הזה – אלוף!'}</p>
-  <p style="font-size:18px;margin:4px 0 10px">עכשיו תרגול: 15 שאלות, והציון הוא מתוך 100!</p>
+  <p style="font-size:20px">${first?'עכשיו אתה מוכן לשלבים!':'כל הכבוד על ההתמדה!'}</p>
+  <p style="font-size:18px;margin:4px 0 10px">עכשיו תרגול: שלבי כוכב ⭐ של 7 שאלות, מהקל לקשה.</p>
   <div style="display:flex;gap:12px;justify-content:center;margin-top:10px;flex-wrap:wrap"><button class="btn green" id="mPrac">✏️ לתרגול</button><button class="btn ghost" id="mHome">🗺️ למסלול</button></div>`);
-  $('#mPrac').onclick=()=>{closeModal();startPractice(U.id);};$('#mHome').onclick=()=>{closeModal();show('home');};
+  $('#mPrac').onclick=()=>{closeModal();startNext(U.id);};$('#mHome').onclick=()=>{closeModal();show('home');};
 };
 /* ============ SANDBOX ============ */
 let SP=null;
@@ -2282,19 +2361,25 @@ function finishPool(){
   const msg=score===100?'מושלם! כל השאלות המאתגרות נכונות בניסיון הראשון! 🌟':score>=60?'יפה מאוד! אתה משתפר בשאלות הקשות 💪':'לא נורא – שאלות מאתגרות הן בדיוק בשביל ללמוד מהן 🌱';
   const note=left===0?'🎉 <b>אין יותר שאלות מאתגרות בנושא הזה — הופה!</b>':`נשארו עוד <b>${left}</b> שאלות מאתגרות. כל שאלה יוצאת מהרשימה אחרי <b>2 תשובות נכונות ברצף</b> בניסיון הראשון.`;
   const btns=[];if(left>0)btns.push(`<button class="btn orange" id="again">🔥 עוד תרגול מאתגר (${left})</button>`);
-  btns.push(`<button class="btn green" id="regular">▶ תרגול רגיל</button>`,'<button class="btn ghost" id="toMap">🗺️ למסלול</button>');
+  btns.push(`<button class="btn green" id="regular">▶ לשלבים</button>`,'<button class="btn ghost" id="toMap">🗺️ למסלול</button>');
   $('#sumCard').innerHTML=`<div class="talk mood-happy" style="justify-content:center"><div class="mascot" style="width:120px;height:130px">${ROBO}</div></div>
    <div class="qnum" style="font-size:18px">${Q.title}</div><div class="sumscore" id="sumScore">${score}<small>/100</small></div>
-   <div class="mmsg" id="mMsg">🔥 תרגול מאתגר – הציון כאן לא משפיע על הכוכבים. ${rm?`הוצאת <b>${rm}</b> שאלות מהרשימה! ✅`:'המשך כך!'}</div>
+   <div class="mmsg" id="mMsg">🔥 תרגול מאתגר – התרגול כאן לא משפיע על הכוכבים והיהלומים. ${rm?`הוצאת <b>${rm}</b> שאלות מהרשימה! ✅`:'המשך כך!'}</div>
    <div class="summsg">${msg}</div><div class="sumsub">נכון בניסיון הראשון: <b>${c} מתוך ${n}</b><br>${note}</div>
    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">${btns.join('')}</div>`;
   const on=(id,f)=>{const e=$('#'+id);if(e)e.onclick=f;};
-  on('again',()=>startChallenge(u));on('regular',()=>startPractice(u));on('toMap',()=>show('home'));
+  on('again',()=>startChallenge(u));on('regular',()=>startNext(u));on('toMap',()=>show('home'));
   if(score===100){sfx('win');confetti(3500,200);}else sfx('good');
 }
-function startPractice(u){closeModal();const qs=drawSession(u);
-  const title=u==='ang'?'נושא 10 · זוויות':u==='mix'?'🏆 האתגר הגדול':`יחידה ${u} · ${UNITS[u-1].title}`;
-  Q={mode:'practice',u,title,qs,idx:0,res:[],score:0,streak:0,first:true,done:false};show('quiz');renderQ();}
+function startPractice(u){closeModal();if(u!=='mix')return startNext(u);const qs=drawSession(u);
+  Q={mode:'practice',u,title:'🏆 האתגר הגדול',qs,idx:0,res:[],score:0,streak:0,first:true,done:false};show('quiz');renderQ();}
+/* ---- a stage = a fixed set of questions (ranks from..to of the topic's difficulty order); only a perfect run (all first-try) earns it ---- */
+function startNext(u){const i=nextStage(u);if(i==null)return openStages(u);startStage(u,i);}
+function startStage(u,i,retry){closeModal();if(!stageOpen(u,i)){HUB=u;if(!$('#unit').classList.contains('on')){show('unit');renderStages();}return lockedMsg(u);}
+  const S=STAGES[i];let qs=[];getBank(u).slice(S.from,S.to).forEach(e=>{try{qs.push(makeQ(e));}catch(err){}});
+  if(retry)qs=shuffle(qs);
+  SAVE.lastU=String(u);persist();
+  Q={mode:'stage',u,stage:i,title:`${topicTitle(u)} · ${stageName(i)}`,qs,idx:0,res:[],score:0,streak:0,first:true,done:false,retry:!!retry};show('quiz');renderQ();}
 function startMix(){startPractice('mix');}
 function renderProg(){
   $('#qProg').innerHTML=Q.qs.map((_,k)=>{const r=Q.res[k];return `<span class="${r==='st'?'st':r==='ok'?'ok':k===Q.idx&&!Q.finished?'cur':''}">${r==='st'?starSvg():r==='ok'?checkSvg:''}</span>`;}).join('');
@@ -2329,41 +2414,49 @@ function resultMsg(score,isAng){
   if(score>=85)return['מצוין! איזה יופי! 🌟','כמעט מושלם – אתה ממש שולט בנושא. עוד תרגול קטן וזה 100!'];
   if(score>=60)return['יפה מאוד, אדם! 💪','עבודה טובה! כל פעם אתה משתפר. אפשר לנסות שוב ל-15 שאלות חדשות ולהגיע גבוה יותר.'];
   return['התחלה טובה! 🌱','ככה לומדים – מנסים, טועים ומצליחים. כדאי להציץ ב"הסבר" 📖 ואז לנסות שוב, עם שאלות חדשות.'];}
-function masteryMsg(score,u,info){/* info: {before,after,earned,completedNow,extra} */
-  const isT=u!=='mix';if(!isT)return score===100?'🏆 100 באתגר הגדול!':'';
-  const m=info.after,left=MAST_MAX-m;
-  if(score===100){
-    if(info.completedNow)return `🏆 <b>הושלם! 7 מתוך 7 כוכבים!</b> אדם, סיימת את הנושא הזה בגדול – קיבלת גביע! אפשר להמשיך לתרגל, כל 100 נוסף הוא עוד כוכב זהב ✨`;
-    if(info.extra)return `✨ עוד תרגול מושלם! הנושא כבר הושלם (7/7) – זה כוכב זהב נוסף (סה״כ ${info.extraN}). גאים בך!`;
-    return `⭐ <b>כוכב ${m} מתוך 7!</b> ${left===1?'נשאר עוד <b>כוכב אחד</b> אחרון להשלמת הנושא!':`נשארו עוד <b>${left} כוכבים</b> להשלמת הנושא.`} אפשר עוד 15 שאלות חדשות!`;}
-  if(info.done)return `הנושא הזה כבר הושלם 🏆 (7/7). ציון ${score} – אפשר לנסות שוב ל-100 ולהוסיף כוכב זהב.`;
-  return `יש לך <b>${starsW(m)} מתוך 7</b> בנושא הזה. כוכב מקבלים רק על <b>100</b> (כל 15 נכונות בניסיון הראשון) – נשאר${left===1?' עוד כוכב אחד':'ו עוד '+left+' כוכבים'}. נסה שוב עם 15 שאלות חדשות, אתה יכול! 💪`;}
+function dotsRow(){return `<div class="rdots">${Q.res.map(r=>`<i class="${r==='st'?'st':'ok'}"></i>`).join('')}</div>`;}
 function finishRound(){
   if(Q.pool)return finishPool();
-  Q.finished=true;const c=Q.score,score=scoreFor(c),u=Q.u;const rec=US(u);const prev=rec.best;
-  rec.last=score;rec.n=(rec.n||0)+1;const improved=prev==null||score>prev;if(improved)rec.best=score;
-  /* 7-star mastery: ONLY a perfect 100 adds a star; lower scores never add or remove one */
-  const before=masteryOf(u),wasDone=before>=MAST_MAX;let completedNow=false,extra=false;
-  if(score===100&&u!=='mix'){if(before<MAST_MAX){rec.mast=before+1;completedNow=rec.mast>=MAST_MAX;}else{rec.extra=(rec.extra||0)+1;extra=true;}}
-  const after=u==='mix'?0:masteryOf(u);
-  persist();show('summary');
-  const info={before,after,completedNow,extra,extraN:extraOf(u),done:wasDone};
-  const [msg,sub]=resultMsg(score,u==='ang');const rcm=recommended();
-  const btns=[`<button class="btn orange" id="again">🔄 עוד 15 שאלות חדשות</button>`];
-  if(u!=='mix')btns.push(`<button class="btn" id="toLesson">📖 הסבר</button>`);
-  if(rcm&&rcm!==u)btns.push(`<button class="btn green" id="goNext">➡ לנושא המומלץ ${numOf(rcm)}</button>`);
-  btns.push('<button class="btn ghost" id="toMap">🗺️ למסלול</button>');
-  const row=u==='mix'?'':`<div class="sumstars m7row ${after>=MAST_MAX?'gold':''}">${Array.from({length:MAST_MAX},(_,i)=>`<span>${starSvg(i<after?'#ffbe0b':'#e3e8f4',(i===after-1&&score===100&&!extra)?'pop':'')}</span>`).join('')}</div>`;
+  if(Q.mode==='stage')return finishStage();
+  /* the big challenge: 15 mixed questions, score out of 100 (no stages) */
+  Q.finished=true;const c=Q.score,score=scoreFor(c,Q.qs.length),u=Q.u;const rec=US(u);const prev=rec.best;
+  rec.last=score;rec.n=(rec.n||0)+1;const improved=prev==null||score>prev;if(improved)rec.best=score;persist();show('summary');
+  const [msg,sub]=resultMsg(score);
   $('#sumCard').innerHTML=`${score===100?`<div class="trophy">${ICONS.trophy}</div>`:`<div class="talk mood-happy" style="justify-content:center"><div class="mascot" style="width:120px;height:130px">${ROBO}</div></div>`}
-   <div class="qnum" style="font-size:18px">${Q.title}</div><div class="sumscore" id="sumScore">${score}<small>/100</small></div>
-   ${row}
-   <div class="mmsg ${score===100?'good':''}" id="mMsg">${masteryMsg(score,u,info)}</div>
+   <div class="qnum" style="font-size:18px">${Q.title}</div><div class="sumscore" id="sumScore">${score}<small>/100</small></div>${dotsRow()}
    <div class="summsg">${msg}</div><div class="sumsub">${sub}<br>נכון בניסיון הראשון: <b>${c} מתוך ${Q.qs.length}</b> · השיא שלך: <span class="co">${rec.best}/100</span>${improved&&prev!=null?'<br>🎉 זה שיא חדש!':''}</div>
+   <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><button class="btn orange" id="again">🔄 עוד 15 שאלות חדשות</button><button class="btn ghost" id="toMap">🗺️ למסלול</button></div>`;
+  $('#again').onclick=()=>startPractice('mix');$('#toMap').onclick=()=>show('home');
+  if(score===100){sfx('win');confetti(6000,320);CONF_T=setTimeout(()=>confetti(3500,160),1800);}else sfx('good');
+}
+function finishStage(){
+  Q.finished=true;const u=Q.u,i=Q.stage,S=STAGES[i],n=Q.qs.length,c=Q.score,perfect=c===n;const rec=US(u);
+  const wasEarned=earned(u,i),starsBefore=starsOf(u),wasDone=isDone(u);
+  rec.n=(rec.n||0)+1;rec.sb[i]=Math.max(bestStage(u,i),c);
+  if(perfect)rec.sg[i]=1;
+  const doneNow=!wasDone&&isDone(u),starsNow=starsOf(u),unlockedDia=perfect&&starsBefore<10&&starsNow>=10&&!doneNow;
+  persist();show('summary');
+  const nx=nextStage(u);const nm=stageName(i);
+  let big,msg,sub;
+  if(perfect){
+    big=doneNow?'🏆 הושלם!':wasEarned?`${nm} – שוב מושלם!`:`${nm} הושג! ${S.kind==='star'?'⭐':'💎'}`;
+    msg=doneNow?`אדם, סיימת את כל הנושא: 10 כוכבים ו-3 יהלומים! קיבלת גביע 🏆`:unlockedDia?`💎 <b>10 כוכבים!</b> שלבי היהלום נפתחו – 3 שלבים של 10 שאלות קשות. מוכן לאתגר?`:wasEarned?'עוד פעם בלי טעויות – כל הכבוד!':`מושלם! ענית נכון על כל ${n} השאלות בניסיון הראשון. ${nx==null?'':`השלב הבא מחכה: <b>${stageName(nx)}</b>.`}`;
+    sub=`${S.kind==='star'?`⭐ כוכבים בנושא: <b>${starsNow} מתוך 10</b>`:`💎 יהלומים בנושא: <b>${diasOf(u)} מתוך 3</b>`}`;
+  }else{
+    big=c>=n-1?'כמעט! 💪':c>=n/2?'יפה, ממשיכים! 🌱':'התחלה טובה! 🌱';
+    msg=`ענית נכון בניסיון הראשון על <b>${c} מתוך ${n}</b>. כדי להשיג את ${nm} צריך <b>${n} מתוך ${n}</b> – ללא טעויות. אותן שאלות, בסדר אחר. אתה יכול! 💪`;
+    sub=`רמז: אם משהו לא ברור – כדאי להציץ ב"הסבר" 📖 ואז לנסות שוב.`;}
+  const btns=[];
+  if(perfect){if(nx!=null&&stageOpen(u,nx))btns.push(`<button class="btn green" id="goNext">➡ ${stageName(nx)}</button>`);}
+  else{btns.push(`<button class="btn orange" id="again">🔄 לנסות שוב</button>`);btns.push(`<button class="btn" id="toLesson">📖 הסבר</button>`);}
+  btns.push(`<button class="btn ${perfect?'':'ghost'}" id="toStages">🗂️ כל השלבים</button>`,'<button class="btn ghost" id="toMap">🗺️ למסלול</button>');
+  $('#sumCard').innerHTML=`${perfect?`<div class="trophy">${ICONS.trophy}</div>`:`<div class="talk mood-happy" style="justify-content:center"><div class="mascot" style="width:120px;height:130px">${ROBO}</div></div>`}
+   <div class="qnum" style="font-size:18px">${Q.title}</div><div class="sumscore stg7" id="sumScore">${c}<small>/${n}</small></div>${dotsRow()}
+   <div class="mmsg ${perfect?'good':''}" id="mMsg">${msg}</div><div class="summsg">${big}</div><div class="sumsub">${sub}</div>
    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">${btns.join('')}</div>`;
-  document.querySelectorAll('.sumstars span').forEach((e,k)=>{if(e.firstChild)e.firstChild.style.animationDelay=(k*90)+'ms';});
   const on=(id,f)=>{const e=$('#'+id);if(e)e.onclick=f;};
-  on('again',()=>startPractice(u));on('toMap',()=>show('home'));on('toLesson',()=>openLesson(u,!lessonDone(u)));on('goNext',()=>startPractice(rcm));
-  if(score===100){sfx('win');confetti(completedNow?9000:6000,completedNow?520:320);CONF_T=setTimeout(()=>confetti(3500,160),1800);}else sfx('good');
+  on('again',()=>startStage(u,i,true));on('goNext',()=>startStage(u,nx));on('toStages',()=>openStages(u));on('toMap',()=>show('home'));on('toLesson',()=>openLesson(u,!lessonDone(u)));
+  if(perfect){sfx('win');confetti(doneNow?9000:unlockedDia?7000:4500,doneNow?520:unlockedDia?400:260);if(doneNow||unlockedDia)CONF_T=setTimeout(()=>confetti(3500,160),1800);}else sfx('good');
 }
 
 /* keyboard support */
@@ -2372,7 +2465,7 @@ document.addEventListener('keydown',e=>{
   if($('#quiz').classList.contains('on')){const a=$('#qAns');if(a._key&&!Q.done){a._key(e.key);return;}if(e.key==='Enter'&&Q.done)$('#qNext').click();}
   else if($('#lesson').classList.contains('on')){const a=$('#lAns');if(a._key&&!LS.done){a._key(e.key);return;}if(e.key==='Enter'&&!$('#modal').classList.contains('on')&&LS.done)$('#lNext').click();}
 });
-window.__app={get SAVE(){return SAVE;},UNITS,TPL,buildQ,buildVariant,get Q(){return Q;},get LS(){return LS;},unitOpen,lessonDone,mountQ,makePlane,ANGU,makeAngleBoard,diag,canonName,canonArc,equivNames,labelPos,validSpec,nextStep:continueTarget,startPractice,renderQ,openUnit,openLesson,renderStep,startMix,show,finishRound,getBank,drawSession,makeQ,scoreFor,answerQ:answer,masteryOf,isDone,extraOf,startChallenge,chalCount,chalMap,chalClean,finishPool,totalMastery,doneCount,recommended,migrateSave,bestOf,lastOf,practicedCount,avgScore,SESSION_N,BANK_N};
+window.__app={get SAVE(){return SAVE;},UNITS,TPL,buildQ,buildVariant,get Q(){return Q;},get LS(){return LS;},unitOpen,lessonDone,mountQ,makePlane,ANGU,makeAngleBoard,diag,canonName,canonArc,equivNames,labelPos,validSpec,nextStep:continueTarget,startPractice,renderQ,openUnit,openLesson,renderStep,startMix,show,finishRound,getBank,drawSession,makeQ,scoreFor,answerQ:answer,STAGES,STAGE_LABELS,stageEntries,sgOf,earned,starsOf,diasOf,stagesOf,isDone,stageOpen,nextStage,bestStage,startStage,startNext,openStages,renderStages,get HUB(){return HUB;},startChallenge,chalCount,chalMap,chalClean,finishPool,finishStage,totalStars,totalDias,stageTotals,doneCount,recommended,migrateSave,bestOf,lastOf,practicedCount,SESSION_N,BANK_N};
 persist();renderHome();
 
 </script>
