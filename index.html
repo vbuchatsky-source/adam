@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; connect-src 'none'">
 <title>אדם במסע הצירים</title>
 <style>
 :root{--x:#ff4d6d;--y:#3a86ff;--ink:#2b2d42;--muted:#6b7280;--gold:#ffbe0b;--green:#2ec4b6;--purple:#8338ec;--orange:#fb8500;--pink:#ff70a6;--teal:#06d6a0}
@@ -344,6 +343,19 @@ body{font-family:"Rubik","Varela Round","Segoe UI","Arial Hebrew",Arial,sans-ser
 .ustars small.sn{font-size:14px;font-weight:900;color:#5b6180;margin-top:2px}
 .sumscore small{font-size:.42em;color:var(--muted);font-weight:800}
 @media (max-width:430px){.planSub{font-size:16px}.acts .btn{font-size:15px;padding:7px 12px}.sc{font-size:14.5px}}
+/* ===== 7-star mastery ===== */
+.mrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 2px}
+.m7{display:inline-flex;gap:2px;direction:ltr}.m7 svg,.m7 .star{width:22px;height:22px}
+.mline{font-size:15px;font-weight:800;color:#5b6180}.mline.gold{color:#b7791f}
+.unit.mastered,.sidecard.mastered{border:4px solid #ffbe0b;background:linear-gradient(135deg,#fffbea,#effff9);box-shadow:0 6px 0 #f2c94c,0 0 18px #ffe08a}
+.badge-done{background:linear-gradient(90deg,#ffbe0b,#fb8500)!important;color:#fff!important}
+.m7row{gap:4px;flex-wrap:nowrap;direction:ltr}.m7row svg{width:40px;height:40px}.m7row.gold svg{filter:drop-shadow(0 0 6px #ffcf3f)}
+.mmsg{max-width:560px;margin:4px auto 10px;padding:10px 14px;border-radius:18px;background:#f4f6ff;font-size:18px;font-weight:800;line-height:1.5}
+.mmsg.good{background:#fff6d6;border:2px solid #ffd166}
+@media (max-width:640px){.m7 svg,.m7 .star{width:19px;height:19px}.m7row svg{width:34px;height:34px}.mmsg{font-size:16px}}
+
+/* challenge pool button */
+.btn.chal{background:#fff1e6;color:#c2410c;border:2px solid #fdba74;box-shadow:0 4px 0 #f8c79a}.btn.chal.zero{background:#f4f6fb;color:#7b8199;border-color:#dde2ee;box-shadow:0 4px 0 #dde2ee}
 
 </style>
 </head>
@@ -353,7 +365,7 @@ body{font-family:"Rubik","Varela Round","Segoe UI","Arial Hebrew",Arial,sans-ser
   <div class="brand"><span class="rocket">🚀</span> אדם במסע <span><span class="lx">הצי</span><span class="ly">רים</span></span></div>
   <div class="spacer"></div>
   <button class="btn ghost small" id="rulesBtn">📘<span class="rtxt"> תזכורת</span></button>
-  <div class="pill" title="כוכבים שאספת"><span id="starIcon"></span><b id="starCount">0</b></div>
+  <div class="pill" title="כוכבי שליטה שאספת (מתוך 70)"><span id="starIcon"></span><b id="starCount">0</b></div>
   <button class="btn ghost small" id="soundBtn" title="צליל">🔊</button>
 </header>
 
@@ -374,7 +386,6 @@ body{font-family:"Rubik","Varela Round","Segoe UI","Arial Hebrew",Arial,sans-ser
     <div class="pbarWrap"><div class="pbarTxt" id="pbarTxt"></div><div class="pbar" id="pbar"></div></div>
     <button class="btn green bigcont" id="contBtn">▶ המשך מהמקום שעצרתי</button>
     <div class="units" id="units"></div>
-    <div class="sidetrack" id="sidetrack"></div>
     <div class="extras" id="extras"></div>
   </div>
  </div>
@@ -493,7 +504,11 @@ let SAVE={stars:0,best:null,perfect:0,units:{},lstep:{},last:null};
 try{Object.assign(SAVE,JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){}
 try{if(!localStorage.getItem(KEY)){const o=JSON.parse(localStorage.getItem('adamCoords_v1')||'null');if(o){SAVE.stars=o.stars||0;SAVE.best=o.best==null?null:o.best;SAVE.perfect=o.perfect||0;}}}catch(e){}
 SAVE.units=SAVE.units||{};SAVE.lstep=SAVE.lstep||{};
-function persist(){try{localStorage.setItem(KEY,JSON.stringify(SAVE));}catch(e){} const el=$('#starCount');if(el)el.textContent=SAVE.stars;}
+const MAST_KEYS=['1','2','3','4','5','6','7','8','9','ang'];
+const MAST_MAX=7;
+function masteryOfRec(r){const m=r&&Number.isFinite(+r.mast)?Math.floor(+r.mast):0;return Math.max(0,Math.min(MAST_MAX,m));}
+function masteryTotal(){let t=0;MAST_KEYS.forEach(k=>{t+=masteryOfRec(SAVE.units&&SAVE.units[k]);});return t;}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(SAVE));}catch(e){} const el=$('#starCount');if(el)el.textContent=masteryTotal()+'/'+(MAST_KEYS.length*MAST_MAX);}
 function addStars(n){SAVE.stars+=n;persist();const p=$('#starCount').parentElement;p.classList.remove('shake');void p.offsetWidth;p.classList.add('shake');}
 
 /* ============ sound ============ */
@@ -1397,6 +1412,91 @@ DEF('rectMC',(A,B,C)=>{const xs=[A[0],B[0],C[0]],ys=[A[1],B[1],C[1]];const cx=xs
  ()=>genUntil(()=>{const x1=rc(),x2=rc(),y1=rc(),y2=rc();if(x1===x2||y1===y2)return null;const q=[[x1,y1],[x2,y1],[x2,y2],[x1,y2]];if(!q.every(p=>inB(p)))return null;const k=ri(0,3);const g=shuffle(q.filter((_,i)=>i!==k));try{TPL.rectMC.b(...g);}catch(e){return null;}const D=q[k];
    const xs=g.map(p=>p[0]),ys=g.map(p=>p[1]);const ws=[[D[1],D[0]],[xs.find(x=>x!==D[0]),D[1]],[D[0],ys.find(y=>y!==D[1])],[-D[0],D[1]],[D[0],-D[1]]].filter(q=>!same(q,D));return new Set(ws.map(String)).size>=3?g:null;}));
 
+/* ---------- MULTI-SELECT templates: several answers are correct ("select all") ---------- */
+const seededArgs=(name,seed)=>{const o=Math.random;let s=seed>>>0;Math.random=()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};try{return TPL[name].r();}finally{Math.random=o;}};
+const MQ=(name,seed)=>[name,...seededArgs(name,seed)];
+const MULTI_SAY='סמן <b>את כל</b> התשובות הנכונות (יש יותר מאחת).';
+const ptL=l=>`<b style="font-size:1.25em">${l}</b>`;
+function MULTI(prompt,items,o){/* items: [html,correct] */const opts=shuffle(items.map(([h,c])=>({html:h,correct:!!c})));return Object.assign({kind:'multi',prompt,options:opts,setup(){}},o);}
+const DEFM=(name,b,r)=>DEF(name,(...a)=>{const q=b(...a);q.args=a;q.tplName=name;return q;},r);
+const distinctPts=ps=>uniq(ps);
+/* U1: which points are on the X / Y axis (the origin is on both!) */
+DEFM('axMulti',(ax,pts)=>{const on=p=>ax==='x'?p[1]===0:p[0]===0;
+  return MULTI(`אילו מהנקודות הבאות נמצאות <b>על ציר ה-${ax.toUpperCase()}</b>? ${MULTI_SAY}`,pts.map(p=>[co(p),on(p)]),{key:K('axMulti',ax,pts),hint:AXHINT+' ושימו לב: ראשית הצירים (0,0) נמצאת על שני הצירים.',cols1:false});},
+ ()=>genUntil(()=>{const ax=pick(['x','y']);const mk=()=>ax==='x'?[rc(),0]:[0,rc()];const good=[mk(),mk()];if(Math.random()<.5)good.push(Math.random()<.5?[0,0]:mk());
+   const gp=good[0];const bad=[[gp[1],gp[0]],ax==='x'?[rc(),ri(1,5)]:[ri(1,5),rc()],rp(),ax==='x'?[0,rc()]:[rc(),0]].filter(p=>!(ax==='x'?p[1]===0:p[0]===0));
+   const all=shuffle(good.concat(bad.slice(0,Math.max(2,6-good.length-0)).slice(0,6-good.length)));if(!distinctPts(all)||!all.every(p=>inB(p)))return null;
+   const nOk=all.filter(p=>ax==='x'?p[1]===0:p[0]===0).length;return(nOk>=2&&all.length-nOk>=2&&all.length>=5)?[ax,all]:null;}));
+/* U1: right of the Y axis AND above the X axis (a point ON an axis is not "right of / above") */
+DEFM('quadMulti',(pts,dx,dy)=>{const f=p=>(dx>0?p[0]>0:p[0]<0)&&(dy>0?p[1]>0:p[1]<0);
+  return MULTI(`אילו נקודות נמצאות <b>${dx>0?'מימין':'משמאל'} לציר ה-Y</b> <b>וגם ${dy>0?'מעל':'מתחת'} לציר ה-X</b>? ${MULTI_SAY}`,pts.map(p=>[co(p),f(p)]),{key:K('quadMulti',pts,dx,dy),
+   hint:`${dx>0?'מימין':'משמאל'} לציר ה-Y: ה-${X_} ${dx>0?'חיובי':'שלילי'}. ${dy>0?'מעל':'מתחת'} לציר ה-X: ה-${Y_} ${dy>0?'חיובי':'שלילי'}. צריך <b>שניהם</b> – ונקודה שעל אחד הצירים (מספר 0) לא נחשבת.`});},
+ ()=>genUntil(()=>{const dx=pick([1,-1]),dy=pick([1,-1]);const sx=dx>0?()=>ri(1,8):()=>ri(-4,-1),sy=dy>0?()=>ri(1,8):()=>ri(-4,-1);const good=[[sx(),sy()],[sx(),sy()]];if(Math.random()<.4)good.push([sx(),sy()]);
+   const bad=[[-dx*ri(1,4),sy()],[sx(),-dy*ri(1,4)],[0,sy()],[sx(),0]];const all=shuffle(good.concat(shuffle(bad).slice(0,6-good.length)));
+   return(distinctPts(all)&&all.every(p=>inB(p))&&all.length>=5)?[all,dx,dy]:null;}));
+/* U2: which points satisfy the rule (2-3 correct) */
+DEFM('ruleMulti',(rs,good,bad)=>{const r=rule(rs);const all=good.map(p=>[p,true]).concat(bad.map(p=>[p,false]));
+  return MULTI(`אילו מהנקודות הבאות הן נקודות ש${r.cl}? ${MULTI_SAY}`,all.map(([p,c])=>[co(p),r.f(p[0],p[1])]),{key:K('ruleMulti',rs,good,bad),hint:`${r.h} בדוק כל נקודה בנפרד – כמה מהן מתאימות?`,after(P){if(r.line){P.lines=[r.line];P.refresh();}}});},
+ ()=>genUntil(()=>{const rs=ruleArg();const r=rule(rs);const sat=shuffle(satPts(rs,false));const ng=ri(2,3);if(sat.length<ng)return null;const good=sat.slice(0,ng);const bad=nearMiss(r,good[0],6-ng-ri(0,1)).filter(p=>!r.f(p[0],p[1]));
+   const all=good.concat(bad);return(distinctPts(all)&&bad.length>=2&&all.length>=5)?[rs,good,bad]:null;}));
+/* U3/U4: scaled boards - which of the lettered points ... */
+const LTR=['A','B','C','D','E','F'];
+function scSetup(b,pts){return P=>{P.auto.axis=false;pts.forEach((p,i)=>P.add(LTR[i],p[0],p[1],{color:'#3a86ff'}));};}
+DEFM('scMulti',(b,pts,mode,t,unit)=>{const cond=mode==='xgt'?(p=>p[0]>t):mode==='ygt'?(p=>p[1]>t):(p=>p[1]===pts[0][1]);const base=mode==='ysame'?pts.slice(1):pts;const off=mode==='ysame'?1:0;
+  const u=unit?` (כל משבצת = ${b.ux===b.uy?b.ux:'ערך אחר בכל ציר'} מטרים)`:'';
+  const q=mode==='xgt'?`אילו נקודות נמצאות במקום שבו ה-${X_} שלהן <b>גדול מ-${t}</b>?`:mode==='ygt'?`אילו נקודות נמצאות במקום שבו ה-${Y_} שלהן <b>גדול מ-${t}</b>?`:`אילו נקודות נמצאות <b>באותו גובה (אותו ${Y_})</b> כמו הנקודה A?`;
+  return MULTI(`${unit?'במפה ':'בשרטוט '}יש ${pts.length} נקודות. ${q} ${MULTI_SAY}`,base.map((p,i)=>[ptL(LTR[i+off]),cond(p)]),{key:K('scMulti',bkey(b),pts,mode,t),board:b,setup:scSetup(b,pts),
+   hint:SCHINT(b)+(mode==='ysame'?' נקודות באותו גובה = אותו Y.':` קרא את ה-${mode==='xgt'?'X':'Y'} של כל נקודה (ספור משבצות והכפל בערך המשבצת) והשווה ל-${t}.`)});},
+ ()=>genUntil(()=>{const b=pick([rb(),rb(),SB(ri(4,6),ri(4,6),pick([10,20,50]),pick([10,20,50]))]);const nx=b.x1/b.ux,ny=b.y1/b.uy;if(nx<4||ny<4)return null;const mode=pick(['xgt','ygt','ysame']);
+   const pts=[];const key=p=>p.join(',');while(pts.length<5){const p=[ri(1,nx)*b.ux,ri(1,ny)*b.uy];if(!pts.some(q=>same(q,p)))pts.push(p);}
+   let t=0;if(mode==='xgt')t=ri(2,nx-1)*b.ux;else if(mode==='ygt')t=ri(2,ny-1)*b.uy;
+   if(mode==='ysame'){const y=pts[0][1];const k=ri(2,3);for(let i=1;i<=k&&i<5;i++){let p;let g=0;do{p=[ri(1,nx)*b.ux,y];g++;}while((pts.some((q,j)=>j!==i&&same(q,p)))&&g<30);pts[i]=p;}
+     for(let i=k+1;i<5;i++)if(pts[i][1]===y)pts[i]=[pts[i][0],y===b.uy?2*b.uy:b.uy];if(new Set(pts.map(key)).size<5)return null;}
+   const base=mode==='ysame'?pts.slice(1):pts;const nOk=base.filter(mode==='xgt'?(p=>p[0]>t):mode==='ygt'?(p=>p[1]>t):(p=>p[1]===pts[0][1])).length;
+   return(nOk>=2&&base.length-nOk>=1&&b.ux>=1)?[b,pts,mode,t,Math.random()<.5&&b.ux>=10]:null;}));
+/* U5: all the names that fit the shape */
+DEFM('shapeMulti',(ps,k)=>{const n=ps.length;const ok={'משולש':n===3,'מחומש':n===5,'מרובע':n===4,'מלבן':n===4&&isRect(ps),'ריבוע':n===4&&isSquare(ps),'מקבילית':n===4&&isPara(ps)};
+  return{key:K('shapeMulti',ps),kind:'multi',board:Q10,prompt:`אילו <b>שמות</b> מתאימים לצורה שבשרטוט? ${MULTI_SAY}`,options:shuffle(ALLN.map(nm=>({html:nm,correct:!!ok[nm]}))),
+   setup(P){P.auto.axis=false;P.auto.guides=false;P.auto.segments=false;ps.forEach((p,i)=>P.add('ABCDE'[i],p[0],p[1],{color:'#8338ec'}));P.polys=[{ids:ps.map((_,i)=>'ABCDE'[i]),fill:'#ffbe0b33',stroke:'#fb8500'}];P.refresh();},
+   hint:`ספור צלעות: 4 צלעות = מרובע. אם כל הזוויות ישרות – זה גם מלבן, ואם כל הצלעות שוות – גם ריבוע. ומלבן הוא גם מקבילית (כל צלע מקבילה לזו שממול). אפשר לבחור כמה שמות!`};},
+ ()=>genUntil(()=>{const t=pick([0,1,2,3]);const w=ri(2,6),h=ri(2,5);const x=ri(0,10-w),y=ri(0,10-h);let ps;
+   if(t===0||t===3)ps=[[x,y],[x+w,y],[x+w,y+h],[x,y+h]];else if(t===1){const s=Math.min(w,h);ps=[[x,y],[x+s,y],[x+s,y+s],[x,y+s]];}else ps=[[x,y],[x+w,y],[x+w+1,y+h],[x+1,y+h]];
+   if(!ps.every(inQ)||!isQuad(ps))return null;if(t===0&&isSquare(ps))return null;return[ps,t];}));
+/* U6: same X as A / which segments are parallel to an axis */
+DEFM('shareMulti',(A,others,c)=>{const f=p=>c==='x'?p[0]===A[0]:p[1]===A[1];const L=['B','C','D','E'];
+  return MULTI(`בשרטוט יש חמש נקודות. אילו מהנקודות B, C, D, E נמצאות <b>${c==='x'?`אחת מעל השנייה עם A (אותו ${X_})`:`באותו גובה כמו A (אותו ${Y_})`}</b>? ${MULTI_SAY}`,others.map((p,i)=>[ptL(L[i]),f(p)]),{key:K('shareMulti',A,others,c),
+   setup(P){P.auto.axis=false;P.add('A',A[0],A[1],{color:'#8338ec'});others.forEach((p,i)=>P.add(L[i],p[0],p[1],{color:'#3a86ff'}));},
+   hint:c==='x'?`אחת מעל השנייה = אותו ${X_}. תקרא את ה-${X_} של A ובדוק מי עוד נמצא באותו קו עומד.`:`באותו גובה = אותו ${Y_}. תקרא את ה-${Y_} של A ובדוק מי עוד נמצאת באותו קו שוכב.`});},
+ ()=>genUntil(()=>{const c=pick(['x','y']);const A=[ri(-3,8),ri(-3,8)];const k=ri(2,3);const o=[];const g=(on)=>{const d=ri(1,6)*pick([1,-1]);return on?(c==='x'?[A[0],A[1]+d]:[A[0]+d,A[1]]):(c==='x'?[A[0]+pick([1,-1])*ri(1,3),A[1]+d]:[A[0]+d,A[1]+pick([1,-1])*ri(1,3)]);};
+   for(let i=0;i<4;i++)o.push(g(i<k));const trap=c==='x'?[A[0]+ri(1,4),A[1]]:[A[0],A[1]+ri(1,4)];o[3]=k===3?o[3]:trap;const sh=shuffle(o);const all=[A,...sh];
+   return(distinctPts(all)&&all.every(p=>inB(p)))?[A,sh,c]:null;}));
+DEFM('parMulti',(segs,ax)=>{const ok=([A,B])=>ax==='x'?isH(A,B):isV(A,B);const nm=['AB','CD','EF','GH'];
+  return MULTI(`בשרטוט ${segs.length} קטעים. אילו מהם <b>מקבילים לציר ה-${ax.toUpperCase()}</b>? ${MULTI_SAY}`,segs.map((s,i)=>[`<span class="co">${nm[i]}</span>`,ok(s)]),{key:K('parMulti',segs,ax),
+   setup(P){P.auto.segments=false;P.auto.axis=false;const cols=['#fb8500','#8338ec','#06b38a','#e63946'];segs.forEach((s,i)=>{P.add(nm[i][0],s[0][0],s[0][1],{color:cols[i]});P.add(nm[i][1],s[1][0],s[1][1],{color:cols[i]});});P.segs=segs.map((s,i)=>({a:s[0],b:s[1],label:null,color:cols[i]}));P.refresh();},
+   hint:ax==='x'?`קטע שמקביל לציר ה-X שוכב: לשתי הנקודות אותו ${Y_}. קטע עומד (אותו ${X_}) מקביל לציר ה-Y. קטע נטוי לא מקביל לאף ציר.`:`קטע שמקביל לציר ה-Y עומד: לשתי הנקודות אותו ${X_}. קטע שוכב (אותו ${Y_}) מקביל לציר ה-X. קטע נטוי לא מקביל לאף ציר.`});},
+ ()=>genUntil(()=>{const ax=pick(['x','y']);const kinds=shuffle(['x','x','y','n']);if(ax==='y')kinds[0]='y';const segs=[];const mk=k=>{const A=[ri(-4,8),ri(-4,8)];const d=ri(2,6)*pick([1,-1]);return k==='x'?[A,[A[0]+d,A[1]]]:k==='y'?[A,[A[0],A[1]+d]]:[A,[A[0]+ri(2,5)*pick([1,-1]),A[1]+ri(2,5)*pick([1,-1])]];};
+   kinds.forEach(k=>segs.push(mk(k)));const pts=segs.flat();const ok=([A,B])=>ax==='x'?isH(A,B):isV(A,B);const nOk=segs.filter(ok).length;
+   return(distinctPts(pts)&&pts.every(p=>inB(p))&&nOk>=2&&nOk<=3)?[segs,ax]:null;}));
+/* U7: a point 'd' away from A on the same line (there are TWO such points) */
+DEFM('distMulti',(A,ax,d,cands)=>{const ok=p=>ax==='x'?(p[1]===A[1]&&Math.abs(p[0]-A[0])===d):(p[0]===A[0]&&Math.abs(p[1]-A[1])===d);const L=['B','C','D','E','F'];
+  return MULTI(`${ptL('A')} היא נקודה בשרטוט. אילו מהנקודות B–F נמצאות <b>${ax==='x'?`באותו גובה כמו A (אותו ${Y_})`:`באותו קו עומד כמו A (אותו ${X_})`}</b> ובמרחק <b>${d}</b> ממנה? ${MULTI_SAY}`,cands.map((p,i)=>[ptL(L[i]),ok(p)]),{key:K('distMulti',A,ax,d,cands),
+   setup(P){P.auto.axis=false;P.add('A',A[0],A[1],{color:'#8338ec'});cands.forEach((p,i)=>P.add(L[i],p[0],p[1],{color:'#3a86ff'}));},
+   hint:`המרחק מ-A הוא ${d} משבצות, אפשר ללכת ${ax==='x'?'ימינה או שמאלה':'למעלה או למטה'} – <b>שתי</b> אפשרויות! ובדוק שהנקודה באמת על אותו ${ax==='x'?'גובה':'קו עומד'}.`});},
+ ()=>genUntil(()=>{const ax=pick(['x','y']);const d=ri(2,5);const A=[ri(-4+d,9-d),ri(-4+d,9-d)];const mv=(s,o)=>ax==='x'?[A[0]+s,A[1]+(o||0)]:[A[0]+(o||0),A[1]+s];
+   const good=[mv(d),mv(-d)];const bad=[mv(d+1),mv(-(d-1)||1),mv(d,1),ax==='x'?[A[0],A[1]+d]:[A[0]+d,A[1]]];const all=shuffle(good.concat(shuffle(bad).slice(0,ri(2,3))));
+   return(distinctPts([A,...all])&&all.every(p=>inB(p))&&all.length>=4)?[A,ax,d,all]:null;}));
+/* U8: which statements about an axis-parallel rectangle are true */
+DEFM('rectProps',(A,C,ts,fs)=>{const B=[C[0],A[1]],D=[A[0],C[1]];const w=Math.abs(C[0]-A[0]),h=Math.abs(C[1]-A[1]);
+  const T=[['לנקודות A ו-D יש אותו '+X_,1],['לנקודות A ו-B יש אותו '+Y_,1],['לנקודות B ו-C יש אותו '+X_,1],['לנקודות D ו-C יש אותו '+Y_,1],['הקטעים AB ו-DC <b>שווים באורכם</b>',1],['הקטע AD מקביל לציר ה-Y',1]];
+  const F=[['לנקודות A ו-B יש אותו '+X_,0],['לנקודות A ו-C יש אותו '+Y_,0],['הקטע AB מקביל לציר ה-Y',0],['לנקודות B ו-D יש אותו '+X_,0],['הקטע AC מקביל לציר ה-X',0],['הקטע BC שווה באורכו לקטע AB',w===h?1:0]];
+  const items=ts.map(i=>T[i]).concat(fs.map(i=>F[i]));
+  return MULTI(`בשרטוט מלבן ABCD שצלעותיו מקבילות לצירים. אילו מהמשפטים <b>נכונים</b>? ${MULTI_SAY}`,items.map(([t,c])=>[t,c]),{key:K('rectProps',A,C,ts,fs),
+   setup(P){P.auto.axis=false;P.auto.guides=false;P.auto.segments=false;[['A',A],['B',B],['C',C],['D',D]].forEach(([id,p])=>P.add(id,p[0],p[1],{tag:true,color:'#8338ec'}));P.polys=[{ids:['A','B','C','D'],fill:'#06d6a022',stroke:'#06b38a'}];P.refresh();},
+   hint:`במלבן שצלעותיו מקבילות לצירים: צלעות שוכבות = אותו ${Y_}, צלעות עומדות = אותו ${X_}, וצלעות נגדיות שוות באורכן. בדוק כל משפט מול המספרים בשרטוט.`,cols1:true});},
+ ()=>genUntil(()=>{const A=[ri(-3,3),ri(-3,3)];const w=ri(2,6),h=ri(2,6);if(w===h)return null;const C=[A[0]+w,A[1]+h];return inB(C)?[A,C,shuffle([0,1,2,3,4,5]).slice(0,3),shuffle([0,1,2,3,4,5]).slice(0,3)]:null;}));
+DEFM('mapMulti',(b,pts,mode,t)=>{const q=TPL.scMulti.b(b,pts,mode,t,true);q.key=K('mapMulti',bkey(b),pts,mode,t);return q;},
+ ()=>genUntil(()=>{const a=TPL.scMulti.r();const b=a[0];if(b.ux<10)return null;return[a[0],a[1],a[2],a[3]];}));
+
 /* ============ ANGLES side-track: seeded geometry + SVG board ============ */
 function RNG(seed){let s=(seed>>>0)||1;const n=()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};
   return{n,ri:(a,b)=>a+Math.floor(n()*(b-a+1)),pick:a=>a[Math.floor(n()*a.length)],shuf:a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(n()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}};}
@@ -1436,6 +1536,11 @@ function validSpec(spec){const ids=Object.keys(spec.pts);const lp=labelPos(spec)
     for(const [a,b] of spec.segs){if(a===id||b===id){if(distSeg(lp[id],spec.pts[a],spec.pts[b])<15)return false;}else if(distSeg(lp[id],spec.pts[a],spec.pts[b])<16)return false;}}
   const seen={};for(const ar of spec.arcs){const c=canonArc(spec,ar);if(!c||seen[c])return false;seen[c]=1;
     const V=spec.pts[ar.v];if(dst(V,spec.pts[ar.a])<ar.r+16||dst(V,spec.pts[ar.b])<ar.r+16)return false;if(ar.r>200)return false;}
+  /* no labelled point may sit inside an arc's wedge */
+  for(const ar of spec.arcs){const V=spec.pts[ar.v];const ta=aOf(V,spec.pts[ar.a]),tb=aOf(V,spec.pts[ar.b]);const d=nrm(tb-ta),c=ta+d/2,h=Math.abs(d)/2;
+    for(const id of ids){if(id===ar.v)continue;const P=spec.pts[id];if(dst(V,P)<ar.r+14&&Math.abs(nrm(aOf(V,P)-c))<h+.04)return false;}}
+  /* from ANY labelled point, two other points must be exactly on one ray, exactly opposite, or clearly apart (no near-collinear ambiguity) */
+  for(const v of ids){const Vp=spec.pts[v];for(let i=0;i<ids.length;i++){if(ids[i]===v)continue;for(let j=i+1;j<ids.length;j++){if(ids[j]===v)continue;const d=Math.abs(nrm(aOf(Vp,spec.pts[ids[i]])-aOf(Vp,spec.pts[ids[j]])))/DEG;if(d>.3&&d<5)return false;if(d>175&&d<179.7)return false;}}}
   /* rays at one vertex must be well separated (so arcs are big enough to tap) */
   for(const v of ids){const ds=[];incidentDirs(spec,v).forEach(a=>{if(!ds.some(b=>Math.abs(nrm(a-b))<1e-3))ds.push(a);});
     const hasArc=spec.arcs.some(a=>a.v===v)||spec.fan===v;if(!hasArc)continue;
@@ -1443,16 +1548,25 @@ function validSpec(spec){const ids=Object.keys(spec.pts);const lp=labelPos(spec)
   return true;}
 const pickLetters=(r,n,sorted)=>{let l=r.shuf(LETT).slice(0,n);if(sorted)l=l.sort((a,b)=>LETT.indexOf(a)-LETT.indexOf(b));return l;};
 const colorize=(r,arcs)=>{const cs=r.shuf(ARC_COL);arcs.forEach((a,i)=>{a.col=cs[i%cs.length];a.id='arc'+i;});return arcs;};
+
+/* ---- extra labelled points on rays/sides (so several names describe the same ray) ---- */
+const freeL=(r,spec)=>r.pick(LETT.filter(l=>!spec.pts[l]));
+const maxArcR=(spec,v)=>Math.max(0,...spec.arcs.filter(a=>a.v===v).map(a=>a.r));
+function addOnSeg(r,spec,A,B,opt){/* new point between labelled points A and B, clear of the arcs at A and at B */
+  opt=opt||{};const PA=spec.pts[A],PB=spec.pts[B],L=dst(PA,PB);const gA=maxArcR(spec,A)+(opt.gap||36),gB=(opt.noB?0:maxArcR(spec,B))+(opt.gap||36);
+  const lo=gA/L,hi=1-gB/L;if(hi-lo<.05)return null;const f=lo+(hi-lo)*(.25+.5*r.n());const nm=freeL(r,spec);spec.pts[nm]=[PA[0]+f*(PB[0]-PA[0]),PA[1]+f*(PB[1]-PA[1])];return nm;}
+/* arcs get random (but equivalent) end letters: any labelled point on the same ray */
+function relabelArcs(r,spec){spec.arcs.forEach(ar=>{const ra=[ar.a].concat(rayPts(spec,ar.v,ar.a)).filter((x,i,A)=>A.indexOf(x)===i),rb=[ar.b].concat(rayPts(spec,ar.v,ar.b)).filter((x,i,A)=>A.indexOf(x)===i);ar.a=r.pick(ra);ar.b=r.pick(rb);});}
 /* ---- diagram generators (deterministic from seed) ---- */
 function genFan(r,k,o){o=o||{};
   for(let t=0;t<600;t++){
-    const gmin=30;let S=k===2?r.ri(40,150):r.ri(gmin*(k-1)+10,172);
-    const extra=S-gmin*(k-1);const w=Array.from({length:k-1},()=>r.n()+.15),sw=w.reduce((a,b)=>a+b);const gaps=w.map(x=>gmin+extra*x/sw);
+    const gmin=30;let S=o.line?180:(k===2?r.ri(40,150):r.ri(gmin*(k-1)+10,172));
+    const extra=S-gmin*(k-1);if(extra<0)throw new Error('fan: too many rays for a line');const w=Array.from({length:k-1},()=>r.n()+.15),sw=w.reduce((a,b)=>a+b);const gaps=w.map(x=>gmin+extra*x/sw);
     let th=r.n()*2*Math.PI;const mir=r.n()<.5?-1:1;const angs=[th];gaps.forEach(g=>{th+=mir*g*DEG;angs.push(th);});
     let V0=o.V,R0=o.rays;let names;
     if(V0&&R0)names=[V0].concat(R0);else{const sorted=r.n()<.55;const L=pickLetters(r,k+1,false);const rays=sorted?L.slice(1).sort((a,b)=>LETT.indexOf(a)-LETT.indexOf(b)):L.slice(1);names=[L[0]].concat(rays);}
     /* pairs for arcs */
-    let pairs=o.pairs;if(!pairs){const all=[];for(let i=0;i<k;i++)for(let j=i+1;j<k;j++)all.push([i,j]);const want=o.nArcs!==undefined?o.nArcs:(k===2?1:k===3?r.ri(2,3):k===4?r.ri(3,4):r.ri(4,5));pairs=r.shuf(all).slice(0,Math.min(want,all.length));}
+    let pairs=o.pairs;if(!pairs){const all=[];for(let i=0;i<k;i++)for(let j=i+1;j<k;j++)if(!(o.line&&i===0&&j===k-1))all.push([i,j]);const want=o.nArcs!==undefined?o.nArcs:(k===2?1:k===3?r.ri(2,3):k===4?r.ri(3,4):r.ri(4,5));pairs=r.shuf(all).slice(0,Math.min(want,all.length));}
     const spec={pts:{},segs:[],arcs:[],fan:names[0],tapMode:null,hl:null,meta:{type:'fan'+k,V:names[0],rays:names.slice(1)}};
     pairs.forEach(p=>spec.arcs.push({v:names[0],a:names[1+p[0]],b:names[1+p[1]],r:0,col:'#000',id:''}));
     spec.arcs.forEach((a,i)=>a.id='arc'+i);
@@ -1466,7 +1580,11 @@ function genFan(r,k,o){o=o||{};
     /* centre the picture */
     const xs=Object.values(spec.pts).map(p=>p[0]),ys=Object.values(spec.pts).map(p=>p[1]);const dx=280-(Math.min(...xs)+Math.max(...xs))/2,dy=280-(Math.min(...ys)+Math.max(...ys))/2;
     Object.keys(spec.pts).forEach(id=>{spec.pts[id]=[spec.pts[id][0]+dx,spec.pts[id][1]+dy];});
-    spec.segs=names.slice(1).map(n=>[names[0],n]);colorize(r,spec.arcs);
+    spec.segs=names.slice(1).map(n=>[names[0],n]);
+    if(o.line){spec.segs=[[names[1],names[k]]].concat(names.slice(2,k).map(n=>[names[0],n]));spec.meta.type='line'+k;}
+    if(o.ext){const rs=r.shuf(names.slice(1).map((n,i)=>i)).slice(0,Math.min(o.ext,k));let okx=true;spec.meta.extra={};
+      rs.forEach(i=>{const nm=addOnSeg(r,spec,names[0],names[1+i],{noB:true,gap:34});if(!nm)okx=false;else spec.meta.extra[names[1+i]]=nm;});if(!okx)continue;relabelArcs(r,spec);}
+    colorize(r,spec.arcs);
     if(validSpec(spec))return spec;}
   throw new Error('fan failed');}
 function triPts(r){const th0=r.n()*2*Math.PI;const mir=r.n()<.5?-1:1;return[0,1,2].map(i=>polar([280,284],th0+mir*(i*120+r.ri(-28,28))*DEG,r.ri(150,212)));}
@@ -1476,6 +1594,7 @@ function genTri(r,o){o=o||{};
     const L=o.names||pickLetters(r,3,r.n()<.6);const spec={pts:{},segs:[],arcs:[],tapMode:null,hl:null,meta:{type:'tri',names:L}};
     L.forEach((n,i)=>spec.pts[n]=P[i]);spec.segs=[[L[0],L[1]],[L[1],L[2]],[L[2],L[0]]];
     [[0,1,2],[1,0,2],[2,0,1]].forEach(([v,a,b])=>spec.arcs.push({v:L[v],a:L[a],b:L[b],r:46,col:'',id:''}));
+    if(o.ext){const sides=r.shuf(spec.segs.slice()).slice(0,o.ext);let okx=true;spec.meta.extra={};sides.forEach(([a,b])=>{const nm=addOnSeg(r,spec,a,b,{gap:34});if(!nm)okx=false;else spec.meta.extra[a+b]=nm;});if(!okx)continue;relabelArcs(r,spec);}
     colorize(r,spec.arcs);if(validSpec(spec))return spec;}
   throw new Error('tri failed');}
 function genCev(r,o){o=o||{};
@@ -1486,7 +1605,11 @@ function genCev(r,o){o=o||{};
     const spec={pts:{[X]:P[0],[Y]:P[1],[Z]:P[2],[Dn]:D},segs:[[X,Y],[X,Z],[Y,Z],[X,Dn]],arcs:[],tapMode:null,hl:null,meta:{type:'cev',X,Y,Z,D:Dn}};
     const all={Y:{v:Y,a:X,b:Z,r:44},Z:{v:Z,a:X,b:Y,r:44},Xl:{v:X,a:Y,b:Dn,r:44},Xr:{v:X,a:Dn,b:Z,r:44},Xw:{v:X,a:Y,b:Z,r:44},Dl:{v:Dn,a:X,b:Y,r:44},Dr:{v:Dn,a:X,b:Z,r:44}};
     const sel=o.sel||['Y','Z','Xl','Xr','Dl','Dr'];sel.forEach(k=>spec.arcs.push(Object.assign({key:k,col:'',id:''},all[k])));
-    assignRadii(spec,spec.arcs,44,26);colorize(r,spec.arcs);if(validSpec(spec))return spec;}
+    assignRadii(spec,spec.arcs,44,26);
+    if(o.ext){const want=r.shuf(o.extOf||['E','F','G']).slice(0,o.ext);let okx=true;spec.meta.extra={};
+      want.forEach(k=>{const [A,B]=k==='E'?[X,Y]:k==='F'?[X,Z]:[X,Dn];const nm=addOnSeg(r,spec,A,B,{gap:34});if(!nm)okx=false;else spec.meta.extra[k]=nm;});if(!okx)continue;}
+    if(o.ext||o.relabel!==false)relabelArcs(r,spec);
+    colorize(r,spec.arcs);if(validSpec(spec))return spec;}
   throw new Error('cev failed');}
 function genQuad(r,o){o=o||{};
   for(let t=0;t<1200;t++){const th0=r.n()*2*Math.PI,mir=r.n()<.5?-1:1;const P=[0,1,2,3].map(i=>polar([280,282],th0+mir*(i*90+r.ri(-24,24))*DEG,r.ri(150,212)));
@@ -1502,7 +1625,9 @@ function genQuad(r,o){o=o||{};
       /* whole interior angles at 1 and 3 */
       spec.arcs[2]={v:L[1],a:L[0],b:L[2],r:46};spec.arcs[5]={v:L[3],a:L[2],b:L[0],r:46};
     }else for(let i=0;i<4;i++)spec.arcs.push({v:L[i],a:L[(i+3)%4],b:L[(i+1)%4],r:46});
-    spec.arcs.forEach(a=>{a.col='';a.id='';});colorize(r,spec.arcs);if(validSpec(spec))return spec;}
+    spec.arcs.forEach(a=>{a.col='';a.id='';});
+    if(o.ext){const sides=r.shuf(spec.segs.slice(0,4)).slice(0,o.ext);let okx=true;sides.forEach(([a,b])=>{if(!addOnSeg(r,spec,a,b,{gap:34}))okx=false;});if(!okx)continue;relabelArcs(r,spec);}
+    colorize(r,spec.arcs);if(validSpec(spec))return spec;}
   throw new Error('quad failed');}
 function genCross(r,o){o=o||{};
   for(let t=0;t<800;t++){const al=r.ri(36,88);let th=r.n()*2*Math.PI;const mir=r.n()<.5?-1:1;const angs=[th,th+mir*al*DEG,th+mir*180*DEG,th+mir*(180+al)*DEG];
@@ -1510,10 +1635,12 @@ function genCross(r,o){o=o||{};
     const spec={pts:{[M]:V},segs:[[rays[0],rays[2]],[rays[1],rays[3]]],arcs:[],fan:M,tapMode:null,hl:null,meta:{type:'cross',V:M,rays}};
     rays.forEach((n,i)=>spec.pts[n]=polar(V,angs[i],r.ri(172,212)));
     if(!o.noArcs)for(let i=0;i<4;i++)spec.arcs.push({v:M,a:rays[i],b:rays[(i+1)%4],r:50,col:'',id:''});
+    if(o.ext&&!o.noArcs){const rs=r.shuf([0,1,2,3]).slice(0,o.ext);let okx=true;spec.meta.extra={};rs.forEach(i=>{const nm=addOnSeg(r,spec,M,rays[i],{noB:true,gap:34});if(!nm)okx=false;else spec.meta.extra[rays[i]]=nm;});if(!okx)continue;relabelArcs(r,spec);}
     colorize(r,spec.arcs);if(validSpec(spec))return spec;}
   throw new Error('cross failed');}
 function diag(type,seed,o){const r=RNG(seed*7919+13);
-  if(type[0]==='f'&&type.startsWith('fan'))return genFan(r,+type.slice(3),o);
+  if(type.startsWith('fan'))return genFan(r,+type.slice(3),o);
+  if(type.startsWith('line'))return genFan(r,+type.slice(4),Object.assign({},o,{line:true}));
   if(type==='tri')return genTri(r,o);if(type==='cev')return genCev(r,o);if(type==='quad')return genQuad(r,o);if(type==='cross')return genCross(r,o);
   throw new Error('diag '+type);}
 
@@ -1566,104 +1693,152 @@ function makeAngleBoard(host,spec){
   svg.addEventListener('contextmenu',e=>e.preventDefault());
   return P;}
 
-/* ============ ANGLES side-track: question templates ============ */
+/* ============ ANGLES: question templates (all answers are computed from RAYS, not from letters) ============ */
 /* ADEF registers a template with a "variant" generator: same diagram kind and options, a fresh seed */
 const ADEF=(name,b,seedIdx,defArgs)=>{DEF(name,b,()=>{const a=JSON.parse(JSON.stringify(defArgs));a[seedIdx]=Math.floor(Math.random()*900000)+100;return a;});
   TPL[name].rv=(...args)=>{const a=JSON.parse(JSON.stringify(args));a[seedIdx]=Math.floor(Math.random()*900000)+100;return a;};};
 const Aq=(spec,o)=>Object.assign({angle:spec,read:[],setup(){}},o);
+const rev3=n=>[n[2],n[1],n[0]];
+const sk=n=>n.join('');
+/* every valid angle of a diagram, grouped by its canonical key (vertex + the two ray directions) */
+function allAngles(spec){const ids=Object.keys(spec.pts);const out={};
+  ids.forEach(v=>ids.forEach(a=>{if(a===v)return;ids.forEach(b=>{if(b===v||b<=a)return;const c=canonName(spec,[a,v,b]);if(c)(out[c]=out[c]||[]).push([a,v,b]);});}));return out;}
+const bothOrders=ns=>{const o=[];ns.forEach(n=>{o.push(n);o.push(rev3(n));});return o;};
+/* all names (both orders, every point on each ray) of the angle called nm */
+function equivStrings(spec,nm){const c=canonName(spec,nm);return bothOrders(allAngles(spec)[c]||[]);}
+const rayOf=(spec,v,p)=>[p].concat(rayPts(spec,v,p)).filter((x,i,A)=>A.indexOf(x)===i);
+const alt=(spec,r,n)=>r.pick(equivStrings(spec,n));
+/* wrong-but-plausible names, relative to the angle nm: same letters/other vertex, same vertex/other rays, anything else */
+function distractPool(spec,nm){const tc=canonName(spec,nm);const v=nm[1];const A=allAngles(spec);const wrongV=[],sameV=[],other=[];const L=new Set(nm);
+  Object.keys(A).forEach(c=>{if(c===tc)return;bothOrders(A[c]).forEach(x=>{if(x[1]===v)sameV.push(x);else if(x.every(l=>L.has(l)))wrongV.push(x);else other.push(x);});});
+  return{wrongV,sameV,other};}
+function pickDistractors(spec,r,nm,n,avoid){const P=distractPool(spec,nm);const out=[];const usedC=new Set();const used=new Set((avoid||[]).map(sk));
+  const take=arr=>{for(const x of r.shuf(arr)){const c=canonName(spec,x);if(!c||usedC.has(c)||used.has(sk(x)))continue;usedC.add(c);used.add(sk(x));out.push(x);return true;}return false;};
+  take(P.wrongV);take(P.sameV);
+  const rest=P.sameV.concat(P.wrongV,P.other);let g=0;while(out.length<n&&g++<50&&take(rest));
+  if(out.length<Math.min(n,2))throw new Error('not enough distractors');return out.slice(0,n);}
+function distractNames(spec,r,correct,n){return pickDistractors(spec,r,correct,n).map(x=>r.n()<.5?x:rev3(x));}
 function pickArc(spec,r,o){o=o||{};
   if(o.ask){const c=canonName(spec,o.ask);const ar=spec.arcs.find(a=>canonArc(spec,a)===c);if(!ar)throw new Error('ask not found');return{ar,nm:o.ask};}
-  let cs=spec.arcs;if(o.only)cs=cs.filter(a=>o.only.includes(a.key));const ar=r.pick(cs);return{ar,nm:r.pick(equivNames(spec,[ar.a,ar.v,ar.b]))};}
+  let cs=spec.arcs;if(o.only)cs=cs.filter(a=>o.only.includes(a.key));if(o.multi)cs=cs.filter(a=>equivStrings(spec,[a.a,a.v,a.b]).length>2);if(!cs.length)throw new Error('pickArc: no arc');const ar=r.pick(cs);return{ar,nm:r.pick(equivStrings(spec,[ar.a,ar.v,ar.b]))};}
+/* gentle hint that mentions several names for one ray when a ray passes through 2+ labelled points */
+function rayHint(spec,nm){const [a,v,b]=nm;const R=[rayOf(spec,v,a),rayOf(spec,v,b)].filter(x=>x.length>1);
+  let h=`הקודקוד הוא <b>${v}</b> – האות האמצעית בכל שם נכון. `;
+  if(R.length)h+=`הקרן ${v}${R[0][0]} עוברת דרך שתי נקודות (${R[0][0]} ו-${R[0][1]}) – אפשר לקרוא לה בשתי דרכים, ולכן לזווית יש כמה שמות. `;
+  return h+'וגם אפשר להפוך את סדר האותיות: ∠ABC = ∠CBA.';}
 const vtxHint=nm=>`הקודקוד הוא <b>האות האמצעית</b> בשם הזווית – כאן ${nm[1]}. חפש את הקשת שיושבת על ${nm[1]}, בין הקרן ${nm[1]}${nm[0]} לקרן ${nm[1]}${nm[2]}.`;
-function distractNames(spec,r,correct,n){const cc=canonName(spec,correct);const [a,v,b]=correct;const out=[];const seen=new Set([cc]);
-  const add=nm=>{const c=canonName(spec,nm);if(!c||seen.has(c))return false;seen.add(c);out.push(r.n()<.5?nm:[nm[2],nm[1],nm[0]]);return true;};
-  /* 1) the same three letters but the wrong vertex */
-  r.shuf([[v,a,b],[a,b,v],[v,b,a],[b,a,v]]).some(x=>add(x));
-  /* 2) names of other angles in the picture */
-  r.shuf(spec.arcs).forEach(ar=>{if(out.length<n)add([ar.a,ar.v,ar.b]);});
-  /* 3) any valid triple */
-  const ids=Object.keys(spec.pts);let g=0;while(out.length<n&&g++<400){add([r.pick(ids),r.pick(ids),r.pick(ids)]);}
-  if(out.length<Math.min(n,2))throw new Error('not enough distractors');return out.slice(0,n);}
+const NUMW={2:'שני',3:'שלושה',4:'ארבעה',5:'חמישה'};
 const fanIdx=(spec,i)=>spec.meta.rays[i];
-/* ---- 1. tap the arc that matches the named angle (the Moodle format) ---- */
+/* ---- 1. tap the arc that matches the named angle (the Moodle format; any equivalent name works because arcs are matched by their rays) ---- */
 ADEF('tapArc',(type,seed,o)=>{o=o||{};const spec=diag(type,seed,o.d);const r=RNG(seed*31+5);const {ar,nm}=pickArc(spec,r,o);spec.tapMode='arc';
-  return Aq(spec,{key:K('tapArc',type,seed),kind:'tap',prompt:`סמן את הקשת המתאימה לזווית ${angN(nm)}`,tapCheck:id=>id===ar.id,sol:ar.id,hint:vtxHint(nm),after(P){P.highlight(ar.id);}});},1,['fan3',1,{}]);
-/* ---- 2. name the highlighted angle (multiple choice, reversed-order and wrong-vertex distractors) ---- */
-ADEF('nameArc',(type,seed,o)=>{o=o||{};const spec=diag(type,seed,o.d);const r=RNG(seed*17+3);const {ar,nm}=pickArc(spec,r,o);spec.hl=ar.id;
-  const ds=distractNames(spec,r,nm,3);const opts=r.shuf([{html:angN(nm),correct:true}].concat(ds.map(d=>({html:angN(d),correct:false}))));
-  return Aq(spec,{key:K('nameArc',type,seed),kind:'mc',prompt:'איך קוראים לזווית שמסומנת בקשת <b>הבולטת</b>? (הקשתות האפורות לא חשובות)',options:opts,sol:null,
-   hint:`הקשת יושבת על הנקודה ${ar.v}. זו האות שחייבת להיות <b>באמצע</b> השם. עכשיו בדוק לאילו שתי קרניים הקשת מתחברת.`,after(P){P.highlight(ar.id);}});},1,['fan3',1,{}]);
-/* ---- 3. mark ALL the names of the highlighted angle ---- */
-ADEF('nameMulti',(type,seed,o)=>{o=o||{};const spec=diag(type,seed,o.d);const r=RNG(seed*13+7);const {ar,nm}=pickArc(spec,r,o);spec.hl=ar.id;
-  const eq=[];equivNames(spec,nm).forEach(x=>{if(!eq.some(y=>y.join('')===x.join('')))eq.push(x);});
-  const base=[nm,[nm[2],nm[1],nm[0]]];const rest=eq.filter(x=>!base.some(y=>y.join('')===x.join('')));const nc=Math.min(eq.length,r.ri(2,3));
-  const good=base.concat(r.shuf(rest)).slice(0,Math.max(2,nc));const ds=distractNames(spec,r,nm,5-good.length>=2?5-good.length:2);
-  const opts=r.shuf(good.map(g=>({html:angN(g),correct:true})).concat(ds.map(d=>({html:angN(d),correct:false}))));
-  return Aq(spec,{key:K('nameMulti',type,seed),kind:'multi',prompt:'סמן <b>את כל</b> השמות שמתאימים לזווית המסומנת בקשת הבולטת (יש יותר מתשובה אחת נכונה!)',options:opts,
-   hint:`אפשר לכתוב את השם משני הכיוונים, ו${ar.v} תמיד נשארת באמצע. חפש את כל השמות שבהם ${ar.v} באמצע ושתי האותיות האחרות הן קצוות הקרניים של הקשת.`,after(P){P.highlight(ar.id);}});},1,['fan4',1,{}]);
+  return Aq(spec,{key:K('tapArc',type,seed),kind:'tap',prompt:`סמן את הקשת המתאימה לזווית ${angN(nm)}`,tapCheck:id=>id===ar.id,sol:ar.id,tgt:nm,
+   hint:equivStrings(spec,nm).length>2?rayHint(spec,nm)+` חפש את הקשת שיושבת על ${nm[1]} בין שתי הקרניים.`:vtxHint(nm),after(P){P.highlight(ar.id);}});},1,['fan3',1,{}]);
+/* ---- 2/3. MULTI-SELECT: all the names of an angle. mode 'name' = highlighted arc, mode 'given' = a name is given and the arcs are hidden ---- */
+function nameQ(tpl,type,seed,o,mode){o=o||{};const spec=diag(type,seed,o.d);const r=RNG(seed*17+3);const {ar,nm}=pickArc(spec,r,o);const lv=o.lv||'e';
+  const G=equivStrings(spec,nm);const pool=G.filter(x=>sk(x)!==sk(nm));
+  let ng=o.ng||(lv==='e'?2:lv==='m'?r.ri(2,3):r.ri(3,4));ng=Math.max(2,Math.min(ng,G.length));
+  let good=[nm];if(lv==='e'&&ng===2)good.push(rev3(nm));else{const ps=r.shuf(pool);while(good.length<ng&&ps.length)good.push(ps.pop());}
+  const nd=Math.min(6-good.length,lv==='e'?2:good.length>=4?2:3);
+  const ds=pickDistractors(spec,r,nm,nd,good).map(x=>r.n()<.5?x:rev3(x));
+  const opts=r.shuf(good.map(g=>({html:angN(g),correct:true,nm:g})).concat(ds.map(d=>({html:angN(d),correct:false,nm:d}))));
+  const cnt=lv==='h'?'סמן <b>את כל</b> השמות הנכונים (אולי יש יותר משניים).':`סמן <b>${NUMW[good.length]} שמות</b> נכונים.`;
+  if(mode==='name')spec.hl=ar.id;else spec.arcs=[];
+  return Aq(spec,{key:K(tpl,type,seed),kind:'multi',nOk:good.length,tgt:nm,mode,
+   prompt:mode==='name'?`איך אפשר לקרוא לזווית שמסומנת בקשת <b>הבולטת</b>? ${cnt} (הקשתות האפורות לא חשובות)`:`נתונה הזווית ${angN(nm)}. אילו שמות מתארים <b>את אותה זווית</b>? ${cnt}`,
+   options:opts,hint:rayHint(spec,nm),after(P){if(mode==='name')P.highlight(ar.id);}});}
+ADEF('nameArc',(type,seed,o)=>nameQ('nameArc',type,seed,o,'name'),1,['fan2',1,{}]);
+ADEF('nameMulti',(type,seed,o)=>nameQ('nameMulti',type,seed,Object.assign({lv:'h'},o||{}),'name'),1,['fan4',1,{ext:1}]);
+ADEF('eqMulti',(type,seed,o)=>nameQ('eqMulti',type,seed,Object.assign({lv:'h'},o||{}),'given'),1,['cev',1,{}]);
+/* ---- 2b. which name does NOT describe the highlighted angle (3 right names, 1 wrong) ---- */
+ADEF('notName',(type,seed,o)=>{o=o||{};const spec=diag(type,seed,o.d);const r=RNG(seed*53+1);const {ar,nm}=pickArc(spec,r,o);spec.hl=ar.id;
+  const G=equivStrings(spec,nm);if(G.length<4)throw new Error('notName: need 3 names');const good=[nm].concat(r.shuf(G.filter(x=>sk(x)!==sk(nm))).slice(0,2));
+  const d=pickDistractors(spec,r,nm,1,good)[0];
+  return Aq(spec,{key:K('notName',type,seed),kind:'mc',tgt:nm,notQ:true,prompt:'שלושה מהשמות הבאים מתארים את הזווית <b>המסומנת בקשת הבולטת</b>, ואחד <b>לא</b>. איזה שם <b>לא מתאים</b>?',
+   options:r.shuf(good.map(g=>({html:angN(g),correct:false,nm:g})).concat([{html:angN(d),correct:true,nm:d}])),
+   hint:rayHint(spec,nm)+' הנקודה שלא מתאימה היא זו שאי אפשר להגיע ממנה לקרן הנכונה.',after(P){P.highlight(ar.id);}});},1,['fan4',1,{d:{ext:1}}]);
+/* ---- 2c. which PAIR of names is the same angle ---- */
+ADEF('sameTwo',(type,seed,o)=>{o=o||{};const spec=diag(type,seed,o.d);const r=RNG(seed*59+3);const {ar,nm}=pickArc(spec,r,o);const G=equivStrings(spec,nm);
+  let pr;const nt=G.filter(x=>sk(x)!==sk(nm)&&sk(x)!==sk(rev3(nm)));
+  if(o.nt&&nt.length)pr=[nm,r.pick(nt)];else pr=[nm,rev3(nm)];
+  const P=distractPool(spec,nm);const pairs=[{p:pr,ok:true}];const seenP=new Set([sk(pr[0])+'|'+sk(pr[1])]);const add=(x,y)=>{if(canonName(spec,x)===canonName(spec,y))return false;const k=sk(x)+'|'+sk(y);if(seenP.has(k)||seenP.has(sk(y)+'|'+sk(x)))return false;seenP.add(k);pairs.push({p:[x,y],ok:false});return true;};
+  /* trap 1: same vertex, one different ray; trap 2: same letters, other vertex; trap 3: any two different angles */
+  let g=0;const sv=r.shuf(P.sameV),wv=r.shuf(P.wrongV),ot=r.shuf(P.other.concat(P.sameV));
+  if(sv.length)add(nm,sv[0]);if(wv.length)add(nm,wv[0]);while(pairs.length<4&&g++<60){const AA=Object.values(allAngles(spec));const x=r.pick(AA)[0];const y=r.pick(bothOrders(r.pick(AA)));if(x&&y)add(r.n()<.5?x:rev3(x),y);}
+  if(pairs.length<3)throw new Error('sameTwo: pairs');
+  const opts=r.shuf(pairs.map(q=>({html:`${angN(q.p[0])} ו-${angN(q.p[1])}`,correct:q.ok,pair:q.p})));
+  return Aq(spec,{key:K('sameTwo',type,seed),kind:'mc',cols1:true,tgt:nm,prompt:'איזה <b>זוג שמות</b> מתאר את <b>אותה זווית</b>?',options:opts,
+   hint:`אותה זווית = אותו קודקוד (האות האמצעית) ושתי אותן קרניים. אפשר להחליף נקודות שנמצאות על אותה קרן, ואפשר להפוך את הסדר.`,after(P){}});},1,['fan3',1,{}]);
 /* ---- 4. tap the vertex letter ---- */
 ADEF('vertexTap',(type,seed,o)=>{o=o||{};const spec=diag(type,seed,o.d);const r=RNG(seed*19+1);const {ar,nm}=pickArc(spec,r,o);spec.tapMode='pt';
-  return Aq(spec,{key:K('vertexTap',type,seed),kind:'tap',prompt:`הקש על האות שהיא <b>הקודקוד</b> של הזווית ${angN(nm)}`,tapCheck:id=>id===nm[1],sol:nm[1],
+  return Aq(spec,{key:K('vertexTap',type,seed),kind:'tap',prompt:`הקש על האות שהיא <b>הקודקוד</b> של הזווית ${angN(nm)}`,tapCheck:id=>id===nm[1],sol:nm[1],tgt:nm,
    hint:`הקודקוד הוא האות <b>האמצעית</b> בשם הזווית (האות שנמצאת בין שתי האחרות). בשם ${nameStr(nm)} האות האמצעית היא...`,after(P){P.mark(nm[1],'goodpt');P.highlight(ar.id);}});},1,['tri',1,{}]);
 /* ---- 5. which letter is the vertex (multiple choice) ---- */
 ADEF('vertexMC',(type,seed,o)=>{o=o||{};const spec=diag(type,seed,o.d);const r=RNG(seed*23+9);const {ar,nm}=pickArc(spec,r,o);
   const others=Object.keys(spec.pts).filter(id=>!nm.includes(id));const letters=r.shuf(nm.concat(others.length?[r.pick(others)]:[]));
-  return Aq(spec,{key:K('vertexMC',type,seed),kind:'mc',prompt:`מהו <b>הקודקוד</b> של הזווית ${angN(nm)}?`,options:letters.map(l=>({html:`<span class="angn">${l}</span>`,correct:l===nm[1]})),
+  return Aq(spec,{key:K('vertexMC',type,seed),kind:'mc',tgt:nm,prompt:`מהו <b>הקודקוד</b> של הזווית ${angN(nm)}?`,options:letters.map(l=>({html:`<span class="angn">${l}</span>`,correct:l===nm[1]})),
    hint:'בשם של זווית כותבים שלוש אותיות. הקודקוד הוא תמיד <b>האות שבאמצע</b>.',after(P){P.highlight(ar.id);}});},1,['fan3',1,{}]);
-/* ---- 6. counting angles ---- */
+/* ---- 6. counting angles (a ray with two points is still ONE ray) ---- */
 const C2=k=>k*(k-1)/2;
-ADEF('countFan',(k,seed,o)=>{o=o||{};const spec=genFan(RNG(seed*7919+13),k,Object.assign({nArcs:0},o.d||{}));const V=spec.meta.V;
-  return Aq(spec,{key:K('countFan',k,seed),kind:'num',answer:C2(k),prompt:`מהנקודה <b>${V}</b> יוצאות ${k} קרניים. כמה <b>זוויות שונות</b> יש בשרטוט? (כל שתי קרניים יוצרות זווית)`,
-   hint:`התחל מקרן אחת וספור כמה זוויות היא יוצרת עם כל אחת מהקרניים האחרות. אחר כך עבור לקרן הבאה – אבל אל תספור פעמיים: ${angN([spec.meta.rays[0],V,spec.meta.rays[1]])} ו-${angN([spec.meta.rays[1],V,spec.meta.rays[0]])} הן אותה זווית!`,
+ADEF('countFan',(k,seed,o)=>{o=o||{};const spec=genFan(RNG(seed*7919+13),k,Object.assign({nArcs:0},o.d||{}));const V=spec.meta.V;const ex=o.d&&o.d.ext;
+  return Aq(spec,{key:K('countFan',k,seed),kind:'num',answer:C2(k),prompt:`מהנקודה <b>${V}</b> יוצאות ${k} קרניים. כמה <b>זוויות שונות</b> יש בשרטוט? (כל שתי קרניים יוצרות זווית)${ex?'<br><small>שים לב: על חלק מהקרניים יש יותר מנקודה אחת, אבל קרן אחת נשארת קרן אחת.</small>':''}`,
+   hint:`התחל מקרן אחת וספור כמה זוויות היא יוצרת עם כל אחת מהקרניים האחרות. אחר כך עבור לקרן הבאה – אבל אל תספור פעמיים: ${angN([spec.meta.rays[0],V,spec.meta.rays[1]])} ו-${angN([spec.meta.rays[1],V,spec.meta.rays[0]])} הן אותה זווית!${ex?' ונקודות על אותה קרן לא יוצרות זווית חדשה.':''}`,
    after(P){}});},1,[3,1,{}]);
 ADEF('countCev',(seed,o)=>{o=o||{};const spec=genCev(RNG(seed*7919+13),Object.assign({sel:[]},o.d||{}));const X=spec.meta.X;
   return Aq(spec,{key:K('countCev',seed),kind:'num',answer:3,prompt:`מהקודקוד <b>${X}</b> יוצאות קרניים אל ${spec.meta.Y}, אל ${spec.meta.D} ואל ${spec.meta.Z}. כמה <b>זוויות שונות</b> יש עם הקודקוד ${X}?`,
    hint:`יש שלוש קרניים. כל שתי קרניים יוצרות זווית: ${angN([spec.meta.Y,X,spec.meta.D])}, ${angN([spec.meta.D,X,spec.meta.Z])} ועוד אחת גדולה שמורכבת משתיהן. כמה זה ביחד?`,after(P){}});},0,[1,{}]);
-ADEF('countCross',(seed,o)=>{o=o||{};const spec=genCross(RNG(seed*7919+13),{noArcs:true});const M=spec.meta.V;
+ADEF('countCross',(seed,o)=>{o=o||{};const spec=genCross(RNG(seed*7919+13),Object.assign({noArcs:true},o.d||{}));const M=spec.meta.V;
   return Aq(spec,{key:K('countCross',seed),kind:'num',answer:4,prompt:`שני ישרים נחתכים בנקודה <b>${M}</b>. כמה זוויות נוצרות בנקודת החיתוך? (לא סופרים זווית ישרה – כזו שנראית כמו קו)`,
    hint:`בין כל שתי קרניים <b>סמוכות</b> שיוצאות מ-${M} נוצרת זווית. עבור על הקרניים בסיבוב אחד ותספור את המרווחים ביניהן.`,after(P){}});},0,[1,{}]);
-/* ---- 7. true / false ---- */
-ADEF('tfAng',(kind,type,seed,o)=>{o=o||{};const spec=diag(type,seed,o.d);const r=RNG(seed*29+11);const {ar,nm}=pickArc(spec,r,o);const [a,v,b]=nm;let st,truth,hint;
-  const ord=()=>{const R=spec.meta.rays||[spec.meta.Y,spec.meta.D,spec.meta.Z];return R;};
-  if(kind==='sameT'){st=`${angN(nm)} ו-${angN([b,v,a])} הן <b>אותה זווית</b>`;truth=true;hint=`כן! אפשר לכתוב את שם הזווית משני הכיוונים. ${v} נשארת באמצע, וזה מה שחשוב.`;}
-  else if(kind==='swapF'){const w=[v,a,b];st=`${angN(nm)} ו-${angN(w)} הן <b>אותה זווית</b>`;truth=false;hint=`בשתי הזוויות האות האמצעית שונה: ${v} בראשונה ו-${a} בשנייה. הקודקוד שונה, ולכן זו לא אותה זווית.`;}
-  else if(kind==='vertT'){st=`הקודקוד של הזווית ${angN(nm)} הוא <b>${v}</b>`;truth=true;hint='הקודקוד הוא האות האמצעית בשם הזווית.';}
-  else if(kind==='vertF'){const w=r.pick([a,b]);st=`הקודקוד של הזווית ${angN(nm)} הוא <b>${w}</b>`;truth=false;hint=`הקודקוד הוא האות <b>האמצעית</b> בשם, כלומר ${v} ולא ${w}.`;}
+/* ---- 7. true / false (ray-based truth) ---- */
+ADEF('tfAng',(kind,type,seed,o)=>{o=o||{};const spec=diag(type,seed,o.d);const r=RNG(seed*29+11);const {ar,nm}=pickArc(spec,r,o);const [a,v,b]=nm;let st,truth,hint,meta=null;
+  const R=spec.meta.rays||[spec.meta.Y,spec.meta.D,spec.meta.Z];const V0=spec.meta.V||spec.meta.X;
+  const tri3=()=>{if(R.length<3||R.some(x=>!x))throw new Error('no rays for sums');const i=r.ri(0,R.length-3);return[R[i],R[i+1],R[i+2]];};
+  if(kind==='sameT'){st=`${angN(nm)} ו-${angN([b,v,a])} הן <b>אותה זווית</b>`;truth=true;hint=`כן! אפשר לכתוב את שם הזווית משני הכיוונים. ${v} נשארת באמצע, וזה מה שחשוב.`;meta={k:'same',a:nm,b:[b,v,a]};}
+  else if(kind==='swapF'){const w=[v,a,b];st=`${angN(nm)} ו-${angN(w)} הן <b>אותה זווית</b>`;truth=false;hint=`בשתי הזוויות האות האמצעית שונה: ${v} בראשונה ו-${a} בשנייה. הקודקוד שונה, ולכן זו לא אותה זווית.`;meta={k:'same',a:nm,b:w};}
+  else if(kind==='extT'){const nt=equivStrings(spec,nm).filter(x=>sk(x)!==sk(nm)&&sk(x)!==sk(rev3(nm)));if(!nt.length)throw new Error('extT: no alt');const y=r.pick(nt);st=`${angN(nm)} ו-${angN(y)} הן <b>אותה זווית</b>`;truth=true;
+    const dif=[a,b].find((l,i)=>l!==y[i===0?0:2]&&l!==y[i===0?2:0]);hint=`בדוק את הקרניים: שתי הנקודות שונות נמצאות על <b>אותה קרן</b> היוצאת מ-${v}, ולכן אפשר לקרוא לקרן הזו בשתי דרכים – והזווית היא אותה זווית.`;meta={k:'same',a:nm,b:y};}
+  else if(kind==='extF'){const P=distractPool(spec,nm);const cand=P.sameV.filter(x=>(rayOf(spec,v,a).includes(x[0])||rayOf(spec,v,a).includes(x[2])||rayOf(spec,v,b).includes(x[0])||rayOf(spec,v,b).includes(x[2])));if(!cand.length)throw new Error('extF');const y=r.pick(cand);
+    st=`${angN(nm)} ו-${angN(y)} הן <b>אותה זווית</b>`;truth=false;hint=`אחת הקרניים שונה: הנקודה ${[y[0],y[2]].find(l=>!rayOf(spec,v,a).includes(l)&&!rayOf(spec,v,b).includes(l))||y[0]} לא נמצאת על אחת משתי הקרניים של הזווית הראשונה. כדי שזו תהיה אותה זווית – שתי הקרניים צריכות להיות אותן קרניים.`;meta={k:'same',a:nm,b:y};}
+  else if(kind==='vertT'){st=`הקודקוד של הזווית ${angN(nm)} הוא <b>${v}</b>`;truth=true;hint='הקודקוד הוא האות האמצעית בשם הזווית.';meta={k:'vert',a:nm,v};}
+  else if(kind==='vertF'){const w=r.pick([a,b]);st=`הקודקוד של הזווית ${angN(nm)} הוא <b>${w}</b>`;truth=false;hint=`הקודקוד הוא האות <b>האמצעית</b> בשם, כלומר ${v} ולא ${w}.`;meta={k:'vert',a:nm,v:w};}
   else if(kind==='midT'){st='בשם של זווית, האות <b>האמצעית</b> היא הקודקוד';truth=true;hint='נכון: למשל ב-∠ABC הקודקוד הוא B, האות שבאמצע.';}
   else if(kind==='firstF'){st='בשם של זווית, האות <b>הראשונה</b> היא תמיד הקודקוד';truth=false;hint='הקודקוד הוא האות שבאמצע, לא הראשונה. למשל ב-∠ABC הקודקוד הוא B.';}
   else if(kind==='manyT'){st=`ב<b>אותו קודקוד</b> אפשר למצוא יותר מזווית אחת, כשיוצאות ממנו כמה קרניים`;truth=true;hint='נכון! כל שתי קרניים שיוצאות מאותה נקודה יוצרות זווית.';}
-  else if(kind==='sumT'||kind==='sumF'){const R=ord(),V=spec.meta.V||spec.meta.X;const i=r.ri(0,R.length-3);const p=R[i],q=R[i+1],s=R[i+2];
-    if(kind==='sumT'){st=`${angN([p,V,s])} = ${angN([p,V,q])} + ${angN([q,V,s])}`;truth=true;hint=`${angN([p,V,q])} ו-${angN([q,V,s])} הן זוויות סמוכות שחולקות את הקרן ${V}${q}. ביחד הן יוצרות את ${angN([p,V,s])}.`;}
-    else{st=`${angN([p,V,q])} = ${angN([p,V,s])} + ${angN([q,V,s])}`;truth=false;hint=`הזווית הגדולה היא ${angN([p,V,s])}, והיא מורכבת משתי הקטנות. אי אפשר שקטנה תהיה שווה לגדולה ועוד קטנה.`;}}
-  return Aq(spec,{key:K('tfAng',kind,type,seed),kind:'mc',tf:true,prompt:`נכון או לא נכון? 🤔<div class="stmt">${st}</div>`,options:[{html:'✓ נכון',correct:truth},{html:'✗ לא נכון',correct:!truth}],hint,after(P){if(/vert|same|swap/.test(kind))P.highlight(ar.id);}});},2,['sameT','fan2',1,{}]);
-/* ---- 8. adjacent angles: sum, missing part, shared ray ---- */
-function triple(spec,r,o){let R,V;if(spec.meta.type==='cev'){R=[spec.meta.Y,spec.meta.D,spec.meta.Z];V=spec.meta.X;}else{R=spec.meta.rays;V=spec.meta.V;}
-  const i=o&&o.i!==undefined?o.i:r.ri(0,R.length-3);return{V,p:R[i],q:R[i+1],s:R[i+2],i};}
-function sumDiag(type,seed,o,extraWhole){const base=(o&&o.d)||{};if(type==='cev'){return genCev(RNG(seed*7919+13),Object.assign({sel:['Xl','Xr'].concat(extraWhole?['Xw']:[])},base));}
-  const r0=RNG(seed*3+1);const k=+type.slice(3);const i=(o&&o.i!==undefined)?o.i:r0.ri(0,k-3);const pairs=[[i,i+1],[i+1,i+2]];if(extraWhole)pairs.push([i,i+2]);
-  return genFan(RNG(seed*7919+13),k,Object.assign({pairs},base));}
-ADEF('sumMC',(type,seed,o)=>{o=o||{};const spec=sumDiag(type,seed,o,false);const r=RNG(seed*37+5);const t=triple(spec,r,type==='cev'?o:{i:(spec.arcs.length?undefined:0)});
-  /* for fans the arcs were built from index i; recover it from the arcs */
-  let p=t.p,q=t.q,s=t.s;if(type!=='cev'){const a0=spec.arcs[0],a1=spec.arcs[1];const shared=[a0.a,a0.b].find(x=>x===a1.a||x===a1.b);const pp=[a0.a,a0.b].find(x=>x!==shared),ss=[a1.a,a1.b].find(x=>x!==shared);p=pp;q=shared;s=ss;}
-  const V=t.V;const corr=r.n()<.5?[p,V,s]:[s,V,p];const ds=distractNames(spec,r,corr,3);
-  return Aq(spec,{key:K('sumMC',type,seed),kind:'mc',prompt:`${angN([p,V,q])} ו-${angN([q,V,s])} הן זוויות סמוכות. איזו זווית <b>מורכבת משתיהן ביחד</b>?`,options:r.shuf([{html:angN(corr),correct:true}].concat(ds.map(d=>({html:angN(d),correct:false})))),
-   hint:`הזוויות סמוכות: הן חולקות את הקרן ${V}${q}. הזווית הגדולה מתחילה בקרן ${V}${p} ונגמרת בקרן ${V}${s}, והקודקוד ${V} נשאר באמצע.`,after(P){}});},1,['fan3',1,{}]);
-ADEF('sumMiss',(type,seed,o)=>{o=o||{};const spec=sumDiag(type,seed,o,true);const r=RNG(seed*41+3);
-  let p,q,s,V;if(type==='cev'){V=spec.meta.X;p=spec.meta.Y;q=spec.meta.D;s=spec.meta.Z;}else{V=spec.meta.V;const small=spec.arcs.slice(0,2);const a0=small[0],a1=small[1];q=[a0.a,a0.b].find(x=>x===a1.a||x===a1.b);p=[a0.a,a0.b].find(x=>x!==q);s=[a1.a,a1.b].find(x=>x!==q);}
-  const flip=r.n()<.5;const miss=flip?[q,V,s]:[p,V,q];const given=flip?[p,V,q]:[q,V,s];const whole=[p,V,s];
-  const ds=distractNames(spec,r,miss,3);const hasGiven=ds.some(d=>canonName(spec,d)===canonName(spec,given));if(!hasGiven)ds[0]=given;
-  return Aq(spec,{key:K('sumMiss',type,seed),kind:'mc',prompt:`${angN(whole)} מורכבת משתי זוויות: ${angN(given)} ועוד זווית אחת. מהי הזווית החסרה?`,options:r.shuf([{html:angN(miss),correct:true}].concat(ds.map(d=>({html:angN(d),correct:false})))),
+  else if(kind==='oneRayT'){st='אם על קרן אחת יש <b>שתי נקודות</b> עם שמות, אפשר לקרוא לקרן הזו בשני שמות – וגם לזווית שלה';truth=true;hint='נכון: כל נקודה על הקרן יכולה לשמש בשם הזווית, כל עוד הקודקוד נשאר באמצע.';}
+  else if(kind==='sumT'||kind==='sumF'||kind==='sumXT'||kind==='sumXF'){const [p,q,s]=tri3();const X=/X/.test(kind);const nn=n=>X?alt(spec,r,n):n;const w=nn([p,V0,s]),n1=nn([p,V0,q]),n2=nn([q,V0,s]);
+    if(/T$/.test(kind)){st=`${angN(w)} = ${angN(n1)} + ${angN(n2)}`;truth=true;hint=`${angN(n1)} ו-${angN(n2)} הן זוויות סמוכות שחולקות את הקרן ${V0}${q}. ביחד הן יוצרות את הזווית הגדולה ${angN(w)} (גם אם האותיות על הקרניים שונות – חשוב על הקרניים).`;meta={k:'sum',w,n1,n2};}
+    else{const w2=nn([p,V0,s]);st=`${angN(n1)} = ${angN(w2)} + ${angN(n2)}`;truth=false;hint=`הזווית הגדולה היא זו שמתחילה בקרן ${V0}${p} ונגמרת בקרן ${V0}${s}, והיא מורכבת משתי הקטנות. אי אפשר שקטנה תהיה שווה לגדולה ועוד קטנה.`;meta={k:'sum',w:n1,n1:w2,n2};}}
+  return Aq(spec,{key:K('tfAng',kind,type,seed),kind:'mc',tf:true,tgt:nm,meta,truth,prompt:`נכון או לא נכון? 🤔<div class="stmt">${st}</div>`,options:[{html:'✓ נכון',correct:truth},{html:'✗ לא נכון',correct:!truth}],hint,after(P){if(/vert|same|swap|ext/.test(kind))P.highlight(ar.id);}});},2,['sameT','fan2',1,{}]);
+/* ---- 8. adjacent angles: sum, missing part, shared ray, "which angle is composed of..." ---- */
+function sumDiag(type,seed,o,extraWhole){o=o||{};const base=o.d||{};
+  if(type==='cev'){const spec=genCev(RNG(seed*7919+13),Object.assign({sel:['Xl','Xr'].concat(extraWhole?['Xw']:[])},base));return{spec,V:spec.meta.X,p:spec.meta.Y,q:spec.meta.D,s:spec.meta.Z};}
+  const r0=RNG(seed*3+1);const k=+type.slice(3);const i=(o.i!==undefined)?o.i:r0.ri(0,k-3);const pairs=[[i,i+1],[i+1,i+2]];if(extraWhole)pairs.push([i,i+2]);
+  const spec=genFan(RNG(seed*7919+13),k,Object.assign({pairs},base));const R=spec.meta.rays;return{spec,V:spec.meta.V,p:R[i],q:R[i+1],s:R[i+2]};}
+const useAlt=(spec)=>!!(spec.meta.extra||spec.meta.type==='cev');
+ADEF('sumMC',(type,seed,o)=>{o=o||{};const {spec,V,p,q,s}=sumDiag(type,seed,o,false);const r=RNG(seed*37+5);const A=useAlt(spec)?(n=>alt(spec,r,n)):(n=>n);
+  const corr=r.n()<.5?A([p,V,s]):A([s,V,p]);const ds=distractNames(spec,r,corr,3);const n1=A([p,V,q]),n2=A([q,V,s]);
+  return Aq(spec,{key:K('sumMC',type,seed),kind:'mc',tgt:[p,V,s],prompt:`${angN(n1)} ו-${angN(n2)} הן זוויות סמוכות. איזו זווית <b>מורכבת משתיהן ביחד</b>?`,options:r.shuf([{html:angN(corr),correct:true,nm:corr}].concat(ds.map(d=>({html:angN(d),correct:false,nm:d})))),
+   hint:`הזוויות סמוכות: הן חולקות את הקרן ${V}${q}. הזווית הגדולה מתחילה בקרן ${V}${p} ונגמרת בקרן ${V}${s}, והקודקוד ${V} נשאר באמצע. אפשר גם לקרוא לקרניים בשם של נקודה אחרת שעל אותה קרן.`,after(P){}});},1,['fan3',1,{}]);
+ADEF('sumMiss',(type,seed,o)=>{o=o||{};const {spec,V,p,q,s}=sumDiag(type,seed,o,true);const r=RNG(seed*41+3);const A=useAlt(spec)?(n=>alt(spec,r,n)):(n=>n);
+  const flip=r.n()<.5;const miss=A(flip?[q,V,s]:[p,V,q]);const given=A(flip?[p,V,q]:[q,V,s]);const whole=A([p,V,s]);
+  const ds=pickDistractors(spec,r,miss,3,[]).map(x=>r.n()<.5?x:rev3(x));const hasGiven=ds.some(d=>canonName(spec,d)===canonName(spec,given));if(!hasGiven)ds[0]=given;
+  return Aq(spec,{key:K('sumMiss',type,seed),kind:'mc',tgt:miss,prompt:`${angN(whole)} מורכבת משתי זוויות: ${angN(given)} ועוד זווית אחת. מהי הזווית החסרה?`,options:r.shuf([{html:angN(miss),correct:true,nm:miss}].concat(ds.map(d=>({html:angN(d),correct:false,nm:d})))),
    hint:`הזווית הגדולה ${nameStr(whole)} שווה לשתי זוויות קטנות סמוכות. אחת מהן היא ${nameStr(given)}. הזווית השנייה היא החלק שנשאר, והיא חולקת איתה את הקרן ${V}${q}.`,after(P){}});},1,['fan4',1,{}]);
-ADEF('sharedRay',(type,seed,o)=>{o=o||{};const spec=sumDiag(type,seed,o,false);const r=RNG(seed*43+7);let p,q,s,V;
-  if(type==='cev'){V=spec.meta.X;p=spec.meta.Y;q=spec.meta.D;s=spec.meta.Z;}else{V=spec.meta.V;const a0=spec.arcs[0],a1=spec.arcs[1];q=[a0.a,a0.b].find(x=>x===a1.a||x===a1.b);p=[a0.a,a0.b].find(x=>x!==q);s=[a1.a,a1.b].find(x=>x!==q);}
-  const R=[p,q,s];const opts=r.shuf(R.map(x=>({html:`הקרן <span class="angn">${V}${x}</span>`,correct:x===q})).concat([{html:'אין להן קרן משותפת',correct:false}]));
+ADEF('sharedRay',(type,seed,o)=>{o=o||{};const {spec,V,p,q,s}=sumDiag(type,seed,o,false);const r=RNG(seed*43+7);
+  const opts=r.shuf([p,q,s].map(x=>({html:`הקרן <span class="angn">${V}${x}</span>`,correct:x===q})).concat([{html:'אין להן קרן משותפת',correct:false}]));
   return Aq(spec,{key:K('sharedRay',type,seed),kind:'mc',prompt:`לזוויות ${angN([p,V,q])} ו-${angN([q,V,s])} יש <b>קרן משותפת</b>. מהי?`,options:opts,
    hint:`קרן משותפת היא קרן שמופיעה <b>בשתי הזוויות</b>. חפש את האות שמופיעה בשני השמות (חוץ מהקודקוד ${V}) – היא קובעת את הקרן.`,after(P){}});},1,['fan3',1,{}]);
-ADEF('whichComposed',(type,seed,o)=>{o=o||{};const spec=sumDiag(type,seed,o,true);const r=RNG(seed*47+9);let p,q,s,V;
-  if(type==='cev'){V=spec.meta.X;p=spec.meta.Y;q=spec.meta.D;s=spec.meta.Z;}else{V=spec.meta.V;const a0=spec.arcs[0],a1=spec.arcs[1];q=[a0.a,a0.b].find(x=>x===a1.a||x===a1.b);p=[a0.a,a0.b].find(x=>x!==q);s=[a1.a,a1.b].find(x=>x!==q);}
-  const whole=spec.arcs.find(a=>canonArc(spec,a)===canonName(spec,[p,V,s]));spec.tapMode='arc';
-  return Aq(spec,{key:K('whichComposed',type,seed),kind:'tap',prompt:`הקש על הקשת של הזווית <b>שמורכבת מ</b>-${angN([p,V,q])} <b>ו</b>-${angN([q,V,s])}`,tapCheck:id=>id===whole.id,sol:whole.id,
+ADEF('whichComposed',(type,seed,o)=>{o=o||{};const {spec,V,p,q,s}=sumDiag(type,seed,o,true);const r=RNG(seed*47+9);const A=useAlt(spec)?(n=>alt(spec,r,n)):(n=>n);
+  const whole=spec.arcs.find(a=>canonArc(spec,a)===canonName(spec,[p,V,s]));spec.tapMode='arc';const n1=A([p,V,q]),n2=A([q,V,s]);
+  return Aq(spec,{key:K('whichComposed',type,seed),kind:'tap',tgt:[p,V,s],prompt:`הקש על הקשת של הזווית <b>שמורכבת מ</b>-${angN(n1)} <b>ו</b>-${angN(n2)}`,tapCheck:id=>id===whole.id,sol:whole.id,
    hint:`צריך את הזווית <b>הגדולה</b> שמכילה את שתי הקטנות: היא מתחילה בקרן ${V}${p} ונגמרת בקרן ${V}${s}. חפש את הקשת הגדולה שעוברת מעל שתי הקטנות.`,after(P){P.highlight(whole.id);}});},1,['fan3',1,{}]);
+/* ---- 9. an angle composed of two smaller ones, ALL its names (multi-select) ---- */
+ADEF('wholeNames',(type,seed,o)=>{o=o||{};const {spec,V,p,q,s}=sumDiag(type,seed,o,true);const r=RNG(seed*61+5);
+  const whole=spec.arcs.find(a=>canonArc(spec,a)===canonName(spec,[p,V,s]));const nm=[whole.a,V,whole.b];const G=equivStrings(spec,nm);const good=[nm].concat(r.shuf(G.filter(x=>sk(x)!==sk(nm))).slice(0,r.ri(1,2)));
+  const ds=pickDistractors(spec,r,nm,good.length>=3?2:3,good).map(x=>r.n()<.5?x:rev3(x));spec.hl=whole.id;
+  return Aq(spec,{key:K('wholeNames',type,seed),kind:'multi',nOk:good.length,tgt:nm,mode:'name',prompt:`הזווית הבולטת מורכבת משתי זוויות קטנות סמוכות. <b>סמן את כל</b> השמות של הזווית <b>הגדולה</b> (הכוללת את שתיהן).`,
+   options:r.shuf(good.map(g=>({html:angN(g),correct:true,nm:g})).concat(ds.map(d=>({html:angN(d),correct:false,nm:d})))),
+   hint:`הזווית הגדולה מתחילה בקרן ${V}${p} ונגמרת בקרן ${V}${s}. כל שם נכון חייב שהאות האמצעית תהיה ${V}, והקצוות – נקודות על שתי הקרניים החיצוניות (אפשר גם להפוך סדר).`,after(P){P.highlight(whole.id);}});},1,['fan4',1,{d:{ext:1}}]);
 
 /* ============ UNITS: lessons + 3 practice sets (10 curated questions each) ============ */
 const S=(say,q,ok)=>({say,q,ok});
@@ -1801,6 +1976,17 @@ const UNITS=[
  lesson:[I(`ברוך הבא ל<b>מבחן הסיום</b>, אדם! 🎓 יש בו 15 שאלות מכל היחידות שלמדנו, מהקל לקשה. כמו תמיד: רמז עדין אם טועים ועוד ניסיון, ורק תשובה נכונה בניסיון הראשון נספרת לציון (מתוך 100). בכל פעם השאלות שונות! ✨`,exploreDrag('A',3,4))],
  sets:null}];
 
+/* v5: multi-select ("select all that apply") questions added to the medium/hard sets of the coordinate units */
+const addQ=(u,lv,...specs)=>specs.forEach(s=>UNITS[u-1].sets[lv].push(s));
+addQ(1,1,MQ('axMulti',11),MQ('axMulti',12));addQ(1,2,MQ('quadMulti',13),MQ('quadMulti',14));
+addQ(2,1,MQ('ruleMulti',21));addQ(2,2,MQ('ruleMulti',22),MQ('ruleMulti',23));
+addQ(3,1,MQ('scMulti',31));addQ(3,2,MQ('scMulti',32),MQ('scMulti',33));
+addQ(4,1,MQ('mapMulti',41));addQ(4,2,MQ('mapMulti',42),MQ('mapMulti',43));
+addQ(5,1,MQ('shapeMulti',51));addQ(5,2,MQ('shapeMulti',52),MQ('shapeMulti',53));
+addQ(6,1,MQ('shareMulti',61));addQ(6,2,MQ('parMulti',62),MQ('parMulti',63));
+addQ(7,1,MQ('distMulti',71));addQ(7,2,MQ('distMulti',72),MQ('distMulti',73));
+addQ(8,1,MQ('rectProps',81));addQ(8,2,MQ('rectProps',82),MQ('rectProps',83));
+
 /* ============ ANGLES side-track: lesson + 3 sets (separate from the 9 coordinate units) ============ */
 const ANG_ICON='angle';
 const AQ=(name,...args)=>TPL[name].b(...args);
@@ -1814,12 +2000,14 @@ const F3b=diag('fan3',102,{V:'B',rays:['A','D','C'],pairs:[[0,1],[1,2]]});
 const TRI=diag('tri',103,{names:['A','B','C']});
 const CEV=diag('cev',104,{names:['B','A','C','D'],sel:['Y','Z','Xl','Xr','Dl','Dr']});
 const F5=diag('fan5',105,{V:'M',rays:['A','B','C','D','E'],pairs:[[0,1],[1,2],[0,2],[0,3],[2,4]]});
-const ANGU={id:'ang',icon:ANG_ICON,title:'תרגול זוויות',sub:'זיהוי זווית לפי 3 אותיות · מסלול צד, לא חובה',ex:'כמו בתרגילי המודל (Moodle)',extra:true,
- today:'מסלול צד קצר: איך קוראים לזווית בשלוש אותיות ואיך מזהים איזו קשת שייכת לאיזו זווית – בדיוק כמו בתרגילים באתר של בית הספר.',
+const FX=diag('fan3',201,{V:'B',rays:['A','D','C'],pairs:[[0,1],[1,2],[0,2]],ext:1});
+const [EXR,EXN]=Object.entries(FX.meta.extra)[0];
+const ANGU={id:'ang',icon:ANG_ICON,title:'זוויות',sub:'זיהוי זווית לפי 3 אותיות – כמה שמות לאותה זווית',ex:'כמו בתרגילי המודל (Moodle)',
+ today:'איך קוראים לזווית בשלוש אותיות, איך מזהים איזו קשת שייכת לאיזו זווית, ואיך לזווית אחת יכולים להיות כמה שמות – בדיוק כמו בתרגילים באתר של בית הספר.',
  lesson:[
   aInfo(`שלום אדם! 📐 זו <b>זווית</b>: שתי קרניים שיוצאות מאותה נקודה – הקרן BA והקרן BC. הנקודה <b>B</b> שבה הן נפגשות נקראת <b>הקודקוד</b>. הקשת הצבעונית מראה כמה הקרניים "נפתחו". הקש על הקשת!`,aexplore(F2),{explainTap:true}),
   aS(`בשם של זווית כותבים <b>שלוש אותיות</b>, למשל ${angN(['A','B','C'])}. הסימן ∠ אומר "זווית". <b>האות האמצעית היא תמיד הקודקוד</b>. נסה: איפה הקודקוד של ${angN(['A','B','C'])}?`,AQ('vertexTap','fan2',101,{d:{V:'B',rays:['A','C'],pairs:[[0,1]]},ask:['A','B','C']}),`נכון! B באמצע, ולכן B הקודקוד.`),
-  aS(`אפשר לקרוא את הזווית גם מהצד השני: ${angN(['A','B','C'])} ו-${angN(['C','B','A'])} הן <b>אותה זווית</b>, כי B נשארת באמצע. איך עוד אפשר לקרוא לזווית המסומנת?`,AQ('nameArc','fan2',101,{d:{V:'B',rays:['A','C'],pairs:[[0,1]]},ask:['C','B','A']}),`יפה! אותה זווית, שני שמות.`),
+  aS(`אפשר לקרוא את הזווית גם מהצד השני: ${angN(['A','B','C'])} ו-${angN(['C','B','A'])} הן <b>אותה זווית</b>, כי B נשארת באמצע. סמן את <b>שני השמות</b> של הזווית המסומנת (יש כאן יותר מתשובה אחת נכונה – סמן את שתיהן ואז לחץ בדוק).`,AQ('nameArc','fan2',101,{lv:'e',d:{V:'B',rays:['A','C'],pairs:[[0,1]]},ask:['C','B','A']}),`יפה! אותה זווית, שני שמות.`),
   aInfo(`לפעמים יוצאות מאותו קודקוד <b>כמה קרניים</b>, ואז יש כמה זוויות. כאן מ-B יוצאות שלוש קרניים (BA, BD, BC) ולכן יש שלוש זוויות. כל קשת מתחילה בקרן אחת ונגמרת בקרן אחרת. הקש על כל קשת וראה איך קוראים לה.`,aexplore(F3)),
   aS(`בוא נחפש קשת. ${angN(['A','B','C'])}: הקודקוד B, והקשת צריכה להגיע מהקרן BA אל הקרן BC – שימו לב, ממש עד הקרן הרחוקה, מעל D.`,AQ('tapArc','fan3',102,{d:{V:'B',rays:['A','D','C'],pairs:[[0,2],[0,1],[1,2]]},ask:['A','B','C']}),`מעולה! הקשת הגדולה, מ-A עד C.`),
   aS(`ועכשיו קשת קטנה בתוך הגדולה: ${angN(['A','B','D'])}. הקרן הראשונה BA, והאחרונה BD – ושם הקשת נעצרת.`,AQ('tapArc','fan3',102,{d:{V:'B',rays:['A','D','C'],pairs:[[0,2],[0,1],[1,2]]},ask:['A','B','D']}),`בדיוק! עצרת ב-D ולא המשכת ל-C.`),
@@ -1830,20 +2018,24 @@ const ANGU={id:'ang',icon:ANG_ICON,title:'תרגול זוויות',sub:'זיהו
   aS(`בוא נתרגל: הקש על הקשת של ${angN(['A','B','C'])} במשולש. תחשוב – באיזה קודקוד היא יושבת?`,AQ('tapArc','tri',103,{d:{names:['A','B','C']},ask:['A','B','C']}),`נכון! הזווית בקודקוד B.`),
   aInfo(`עכשיו משולש עם קטע נוסף: מהקודקוד B יוצא קטע אל הנקודה D שעל הצלע AC. מ-B יוצאות <b>שלוש</b> קרניים (BA, BD, BC), ולכן יש שם שתי זוויות קטנות ואחת גדולה. גם ב-D יש זוויות. הקש על הקשתות וראה!`,aexplore(CEV)),
   aS(`בתמונה כזו ברוב התרגילים שואלים על הזוויות הקטנות. חפש את הקשת של ${angN(['C','B','D'])}: קודקוד B, בין הקרן BC לקרן BD.`,AQ('tapArc','cev',104,{d:{names:['B','A','C','D'],sel:['Y','Z','Xl','Xr','Dl','Dr']},ask:['C','B','D']}),`יפה מאוד! זו הזווית הקטנה בצד C.`),
+  aInfo(`🔑 <b>רעיון חשוב:</b> על קרן אחת יכולות להיות <b>שתי נקודות</b> עם שמות! כאן על הקרן B${EXR} יש את ${EXN} ואת ${EXR}. אפשר לקרוא לקרן "B${EXR}" וגם "B${EXN}" – זו אותה קרן! לכן ל<b>אותה זווית</b> יש <b>כמה שמות</b>. הקש על הקשתות וראה את כל השמות שלהן.`,aexplore(FX)),
+  aS(`בוא נתרגל. הזווית המסומנת בקשת הבולטת יושבת על קרן עם שתי נקודות. <b>סמן את כל השמות</b> הנכונים שלה (שים לב: אותה זווית – כמה שמות, והקודקוד תמיד באמצע).`,AQ('nameArc','fan3',201,{lv:'m',multi:true,d:{V:'B',rays:['A','D','C'],pairs:[[0,1],[1,2],[0,2]],ext:1}}),`יפה מאוד! כל השמות האלה מתארים את אותה זווית.`),
+  aS(`ועכשיו נכון או לא נכון: שתי הנקודות נמצאות על אותה קרן, אז שני השמות הם אותה זווית? חשוב על <b>הקרניים</b>, לא על האותיות.`,AQ('tfAng','extT','fan3',202,{multi:true,d:{V:'B',rays:['A','D','C'],pairs:[[0,1],[1,2],[0,2]],ext:1}}),`נכון! שתי נקודות על אותה קרן – אותה זווית.`),
+  aS(`ובמשולש עם קטע: הנקודה D נמצאת על הצלע, ולכן גם שם יש כמה שמות. הקש על הקשת שמתאימה לשם הזה – גם אם האותיות לא "בדיוק" כמו שחשבת.`,AQ('tapArc','cev',203,{multi:true,d:{names:['B','A','C','D'],sel:['Y','Z','Xl','Xr','Dl','Dr']},only:['Y','Z']}),`מצוין! זיהית את הזווית לפי הקרניים.`),
   aInfo(`לפעמים יש <b>הרבה קשתות</b> זו בתוך זו, בגדלים ובצבעים שונים. הכלל: מחפשים קודם את הקודקוד, ואחר כך בודקים לאילו שתי קרניים הקשת מתחברת – הקשת הקטנה והקשת הגדולה מתחילות באותו קודקוד אבל נגמרות בקרניים שונות.`,aexplore(F5)),
   aS(`מבחן אחרון בשיעור: הקש על הקשת של ${angN(['A','M','C'])}. קודקוד M, מהקרן MA עד הקרן MC.`,AQ('tapArc','fan5',105,{d:{V:'M',rays:['A','B','C','D','E'],pairs:[[0,1],[1,2],[0,2],[0,3],[2,4]]},ask:['A','M','C']}),`אלוף! עכשיו אתה יודע לזהות כל זווית.`),
-  aInfo(`סיכום מהיר מרובי 🤖: ① הקודקוד = האות <b>האמצעית</b>. ② ${angN(['A','B','C'])} = ${angN(['C','B','A'])}. ③ מאותו קודקוד יכולות לצאת כמה זוויות. ④ זווית גדולה יכולה להיות מורכבת משתי זוויות סמוכות. בוא נתרגל – 15 שאלות, והציון מתוך 100!`,F2)
+  aInfo(`סיכום מהיר מרובי 🤖: ① הקודקוד = האות <b>האמצעית</b>. ② ${angN(['A','B','C'])} = ${angN(['C','B','A'])}. ③ מאותו קודקוד יכולות לצאת כמה זוויות. ④ זווית גדולה יכולה להיות מורכבת משתי זוויות סמוכות. ⑤ על אותה קרן יכולות להיות כמה נקודות – ולכן לאותה זווית יש כמה שמות. בוא נתרגל – 15 שאלות, והציון מתוך 100!`,F2)
  ],
  sets:[[
-  ['nameArc','fan2',1,{}],['vertexMC','fan3',2,{d:{nArcs:2}}],['tapArc','fan3',3,{d:{nArcs:2}}],['tfAng','sameT','fan2',4,{}],['vertexTap','fan3',5,{d:{nArcs:2}}],
-  ['vertexTap','tri',6,{}],['nameArc','tri',7,{}],['countFan',3,8,{}],['tapArc','tri',9,{}],['tfAng','vertT','fan3',10,{d:{nArcs:2}}]],[
-  ['tapArc','fan4',11,{d:{nArcs:3}}],['nameArc','cev',12,{}],['countFan',4,13,{}],['tapArc','cev',14,{only:['Xl','Xr']}],['sharedRay','fan3',15,{}],
-  ['sumMC','fan4',16,{}],['tfAng','sumF','fan4',17,{d:{nArcs:2}}],['nameMulti','fan4',18,{}],['tapArc','quad',19,{}],['countCev',20,{}]],[
-  ['tapArc','fan5',21,{d:{nArcs:5}}],['whichComposed','fan5',22,{}],['countFan',5,23,{}],['tapArc','cev',24,{only:['Dl','Dr']}],['nameArc','fan5',25,{d:{nArcs:5}}],
-  ['tapArc','cross',26,{}],['tapArc','fan6',27,{d:{nArcs:5}}],['countCross',28,{}],['whichComposed','cev',29,{}],['sumMiss','fan4',30,{}]]]};
+  ['nameArc','fan2',1,{lv:'e'}],['vertexMC','fan3',2,{d:{nArcs:2}}],['tapArc','fan3',3,{d:{nArcs:2}}],['tfAng','sameT','fan2',4,{}],['vertexTap','fan3',5,{d:{nArcs:2}}],
+  ['vertexTap','tri',6,{}],['nameArc','tri',7,{lv:'e'}],['countFan',3,8,{}],['tapArc','tri',9,{}],['sameTwo','tri',10,{}]],[
+  ['tapArc','fan4',11,{d:{nArcs:3}}],['nameArc','cev',12,{lv:'m'}],['countFan',4,13,{d:{ext:1}}],['tapArc','cev',14,{only:['Y','Z']}],['sharedRay','fan3',15,{}],
+  ['sumMC','fan4',16,{}],['tfAng','sumF','fan4',17,{d:{nArcs:2}}],['nameArc','fan3',18,{lv:'m',multi:true,d:{ext:1,nArcs:3}}],['sameTwo','cev',19,{nt:true}],['tfAng','extT','fan3',20,{multi:true,d:{ext:1,nArcs:3}}]],[
+  ['nameMulti','fan4',21,{multi:true,d:{ext:1,nArcs:4}}],['notName','cev',22,{multi:true}],['eqMulti','cev',23,{multi:true}],['tapArc','fan5',24,{multi:true,d:{ext:1,nArcs:4}}],['wholeNames','fan4',25,{d:{ext:1}}],
+  ['whichComposed','fan5',26,{d:{ext:1}}],['tfAng','extF','fan4',27,{d:{ext:2,nArcs:4}}],['nameMulti','line4',28,{multi:true,d:{ext:1,nArcs:4}}],['sameTwo','tri',29,{nt:true,d:{ext:2}}],['sumMiss','fan4',30,{d:{ext:1}}]]]};
 
 /* ============ question banks + 15-question sessions ============ */
-const SESSION_N=15,PER_LEVEL=5,BANK_N=60;           /* bank per topic: 30 curated + 30 generated = 60 (20 easy / 20 medium / 20 hard) */
+const SESSION_N=15,PER_LEVEL=5,BANK_N=100,LV_QUOTA=[33,34,33];   /* bank per topic: curated + generated = 100 (33 easy / 34 medium / 33 hard) */
 const hashStr=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;};
 function mulberry(seed){let s=seed>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
 /* the bank must be identical on every load (so "recently seen" ids stay meaningful) -> generate it with a fixed seed */
@@ -1852,17 +2044,17 @@ const BANKS={};
 function buildTopicBank(u){
   const U=getU(u);const keys=new Set();const out=[];
   U.sets.forEach((set,lvl)=>set.forEach(spec=>{const q=TPL[spec[0]].b(...spec.slice(1));keys.add(q.key);out.push({u,lvl,tpl:spec[0],args:spec.slice(1),key:q.key});}));
-  const per=BANK_N/3;
-  for(let lvl=0;lvl<3;lvl++){let need=per-U.sets[lvl].length,tries=0;const slots=U.sets[lvl];
-    while(need>0&&tries++<900){const spec=slots[tries%slots.length];const t=TPL[spec[0]];
+    for(let lvl=0;lvl<3;lvl++){let need=LV_QUOTA[lvl]-U.sets[lvl].length,tries=0;const slots=U.sets[lvl];
+    while(need>0&&tries++<4000){const spec=slots[tries%slots.length];const t=TPL[spec[0]];
       try{const a=(t.rv?t.rv(...spec.slice(1)):t.r());const q=t.b(...a);if(q&&q.key&&!keys.has(q.key)){keys.add(q.key);out.push({u,lvl,tpl:spec[0],args:a,key:q.key});need--;}}catch(e){}}}
   return out;}
 function getBank(u){
   if(BANKS[u])return BANKS[u];
-  if(u===9){BANKS[9]=[].concat(...UNITS.slice(0,8).map(x=>getBank(x.id)));return BANKS[9];}
+  if(u===9){{const seen=new Set();BANKS[9]=[].concat(...UNITS.slice(0,8).map(x=>getBank(x.id))).filter(e=>!seen.has(e.key)&&seen.add(e.key));}return BANKS[9];}
   if(u==='mix'){BANKS.mix=getBank(9);return BANKS.mix;}
-  BANKS[u]=withSeed(hashStr('bank:'+u+':v3'),()=>buildTopicBank(u));return BANKS[u];}
-function makeQ(e){let q=null,err=null;for(let i=0;i<80&&!q;i++){try{q=TPL[e.tpl].b(...e.args);}catch(x){err=x;}}if(!q)throw err;q.id=e.key;q.unit=e.u;q.lvl=e.lvl;q.tpl=e.tpl;return q;}
+  BANKS[u]=withSeed(hashStr('bank:'+u+':v5'),()=>buildTopicBank(u));return BANKS[u];}
+/* a question is rebuilt from its entry with a seed derived from its id, so it always looks exactly the same (options order, distractors) */
+function makeQ(e){let q=null,err=null;for(let i=0;i<80&&!q;i++){try{q=withSeed(hashStr('q:'+e.key+':'+i),()=>TPL[e.tpl].b(...e.args));}catch(x){err=x;}}if(!q)throw err;q.id=e.key;q.unit=e.u;q.lvl=e.lvl;q.tpl=e.tpl;q.entry=e;return q;}
 /* choose n entries; for mixed topics (final exam / big challenge) spread them over different units */
 function pickN(arr,n,spread){arr=shuffle(arr);if(!spread)return arr.slice(0,n);
   const groups={};arr.forEach(e=>{(groups[e.u]=groups[e.u]||[]).push(e);});const order=shuffle(Object.keys(groups));const out=[];
@@ -1915,18 +2107,24 @@ $('#rulesBtn').onclick=()=>modal(RULES);
 $('#homeMascot').innerHTML=ROBO;$('#hubMascot').innerHTML=ROBO;
 
 /* ============ progress model (v3: nothing is locked; one practice session per topic, score out of 100) ============ */
-const US=u=>{if(!SAVE.units[u]||typeof SAVE.units[u]!=='object')SAVE.units[u]={lesson:false,best:null,last:null,n:0};const x=SAVE.units[u];if(x.best===undefined)x.best=null;if(x.last===undefined)x.last=null;if(x.n===undefined)x.n=0;return x;};
+const US=u=>{if(!SAVE.units[u]||typeof SAVE.units[u]!=='object')SAVE.units[u]={lesson:false,best:null,last:null,n:0,mast:0,extra:0};const x=SAVE.units[u];if(!Number.isFinite(+x.mast))x.mast=0;if(!Number.isFinite(+x.extra))x.extra=0;if(x.best===undefined)x.best=null;if(x.last===undefined)x.last=null;if(x.n===undefined)x.n=0;return x;};
 const lessonDone=u=>!!(SAVE.units[u]&&SAVE.units[u].lesson);
 const bestOf=u=>{const r=SAVE.units[u];return r&&typeof r.best==='number'?r.best:null;};
 const lastOf=u=>{const r=SAVE.units[u];return r&&typeof r.last==='number'?r.last:null;};
 const getU=u=>u==='ang'?ANGU:u==='mix'?null:UNITS[u-1];
 const unitOpen=()=>true;
-const starsFor=s=>s==null?0:s>=100?3:s>=85?2:s>=60?1:0;
-const scoreFor=c=>Math.round(c/SESSION_N*100);
-const practicedCount=()=>UNITS.filter(x=>bestOf(x.id)!=null).length;
-const avgScore=()=>Math.round(UNITS.reduce((s,x)=>s+(bestOf(x.id)||0),0)/UNITS.length);
-/* the recommended next topic: first one (in book order) that has no star yet, then first not at 100 */
-const recommended=()=>{let x=UNITS.find(x=>(bestOf(x.id)==null?-1:bestOf(x.id))<60);if(!x)x=UNITS.find(x=>bestOf(x.id)<100);return x?x.id:null;};
+const starsW=m=>m===1?'כוכב אחד':m+' כוכבים';
+const masteryOf=u=>masteryOfRec(SAVE.units[u]);
+const isDone=u=>masteryOf(u)>=MAST_MAX;
+const extraOf=u=>{const r=SAVE.units[u];return r&&Number.isFinite(+r.extra)?Math.max(0,Math.floor(+r.extra)):0;};
+const totalMastery=()=>masteryTotal();
+const scoreFor=(c,n)=>Math.round(c/(n||SESSION_N)*100);
+const TOPICS=UNITS.concat([ANGU]);const numOf=u=>u==='ang'?10:u;
+const practicedCount=()=>TOPICS.filter(x=>bestOf(x.id)!=null).length;
+const doneCount=()=>TOPICS.filter(x=>isDone(x.id)).length;
+const avgScore=()=>Math.round(TOPICS.reduce((s,x)=>s+(bestOf(x.id)||0),0)/TOPICS.length);
+/* recommended next topic: first topic (book order) never practiced; otherwise the unfinished topic with the fewest stars (ties: book order); null when all 7-star badges are collected */
+const recommended=()=>{let x=TOPICS.find(x=>bestOf(x.id)==null&&!isDone(x.id));if(!x){const open=TOPICS.filter(x=>!isDone(x.id));if(open.length){const mn=Math.min(...open.map(x=>masteryOf(x.id)));x=open.find(x=>masteryOf(x.id)===mn);}}return x?x.id:null;};
 const parseU=s=>(s==='ang'||s==='mix')?s:+s;
 function migrateSave(){
   try{
@@ -1943,7 +2141,12 @@ function migrateSave(){
       if(typeof SAVE.best==='number'&&!SAVE.units.mix)SAVE.units.mix={lesson:false,best:SAVE.best<=10?SAVE.best*10:Math.min(100,SAVE.best),last:null,n:0};
       SAVE.ver=3;
     }
-  }catch(e){SAVE.ver=3;SAVE.seen=SAVE.seen||{};}
+    /* v4: 7-star mastery. Old saves: a best score of 100 counts as ONE star at most; everything else starts at 0 */
+    Object.keys(SAVE.units).forEach(u=>{const r=SAVE.units[u];if(!r||typeof r!=='object')return;
+      if(!Number.isFinite(+r.mast)||r.mast<0)r.mast=(r.best===100&&SAVE.ver<4)?1:0;r.mast=Math.max(0,Math.min(MAST_MAX,Math.floor(+r.mast)));
+      if(!Number.isFinite(+r.extra)||r.extra<0)r.extra=0;});
+    SAVE.ver=4;
+  }catch(e){SAVE.ver=4;SAVE.seen=SAVE.seen||{};}
 }
 migrateSave();
 const st3=n=>[0,1,2].map(i=>starSvg(i<n?'#ffbe0b':'#e6ebf5')).join('');
@@ -1963,38 +2166,39 @@ const ICONS={
  angle:`<svg viewBox="0 0 86 86"><path d="M14 70L70 70L52 16z" fill="#8338ec22"/><path d="M70 70L14 70M14 70L56 14" stroke="#3aa0ff" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M14 70L46 70A32 32 0 0 0 36.5 47.4Z" fill="#fb8500" fill-opacity=".7" stroke="#fb8500" stroke-width="2"/><circle cx="14" cy="70" r="6" fill="#fff" stroke="#2b2d42" stroke-width="3"/></svg>`,
  trophy:`<svg viewBox="0 0 86 86"><path d="M26 14h34v16a17 17 0 0 1-34 0z" fill="#ffbe0b" stroke="#e09a00" stroke-width="3"/><path d="M26 20H14a12 12 0 0 0 14 16M60 20h12a12 12 0 0 1-14 16" fill="none" stroke="#e09a00" stroke-width="4"/><rect x="38" y="46" width="10" height="14" fill="#e09a00"/><rect x="26" y="60" width="34" height="10" rx="4" fill="#5b5f97"/><path d="M43 20l2.6 5.3 5.8.8-4.2 4 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.2-4 5.8-.8z" fill="#fff"/></svg>`,
  lab:`<svg viewBox="0 0 86 86"><path d="M34 14h18M38 14v20L22 64a8 8 0 0 0 7 11h28a8 8 0 0 0 7-11L48 34V14" fill="#e0fbff" stroke="#3a86ff" stroke-width="4" stroke-linejoin="round"/><path d="M27 56h32l5 9a5 5 0 0 1-4 7H26a5 5 0 0 1-4-7z" fill="#06d6a0"/><circle cx="38" cy="50" r="3" fill="#06d6a0"/><circle cx="47" cy="44" r="2.5" fill="#06d6a0"/></svg>`};
-function heroMessage(){const r=recommended();const p=practicedCount();
-  const base=`אני <b>רובי</b>! 🤖 <b>הכל פתוח</b> – אפשר להיכנס לכל נושא מתי שבא לך! הסדר המומלץ הוא <b>1 ← 9</b> (כמו בספר), אבל אתה בוחר.<br>בכל תרגול יש <b>15 שאלות</b> והציון הוא <b>מתוך 100</b>. טעית? אין בעיה – יש רמז ועוד ניסיון! 💪`;
-  if(r==null)return base+`<br>🏆 וואו אדם, קיבלת 100 בכל הנושאים! אפשר לשחק באתגר הגדול או להמשיך לתרגל.`;
-  const U=UNITS[r-1];return base+`<br><b>מומלץ עכשיו:</b> נושא ${r} – ${U.title}. ${p?`כבר תרגלת ${p} נושאים – אלוף!`:'בוא נתחיל! 👇'}`;}
-function cardHTML(x,cls,withNum){const u=x.id;const b=bestOf(u),l=lastOf(u),rec=recommended()===u;
+function heroMessage(){const r=recommended();const d=doneCount(),t=totalMastery();
+  const base=`אני <b>רובי</b>! 🤖 <b>הכל פתוח</b> – אפשר להיכנס לכל נושא מתי שבא לך! הסדר המומלץ הוא <b>1 ← 10</b>, אבל אתה בוחר.<br>בכל תרגול יש <b>15 שאלות</b> והציון הוא <b>מתוך 100</b>. טעית? אין בעיה – יש רמז ועוד ניסיון! 💪<br>⭐ <b>כוכב</b> מקבלים רק על ציון <b>100</b> (כל 15 נכונות בניסיון הראשון). בכל נושא אפשר לאסוף <b>7 כוכבים</b> ולקבל גביע 🏆`;
+  if(r==null)return base+`<br>🏆 וואו אדם! השלמת את כל 10 הנושאים – ${t} כוכבים מתוך ${MAST_KEYS.length*MAST_MAX}! אפשר להמשיך לתרגל באתגר הגדול.`;
+  const U=getU(r);const m=masteryOf(r);return base+`<br><b>מומלץ עכשיו:</b> נושא ${numOf(r)} – ${U.title}${m?` (יש לך ${starsW(m)} מתוך 7)`:''}. ${d?`כבר השלמת ${d} נושאים – אלוף!`:'בוא נתחיל! 👇'}`;}
+const m7=(n,cls)=>`<span class="m7 ${cls||''}" aria-label="${n} כוכבים מתוך 7">${Array.from({length:MAST_MAX},(_,i)=>starSvg(i<n?'#ffbe0b':'#e3e8f4')).join('')}</span>`;
+function cardHTML(x,cls,withNum){const u=x.id;const b=bestOf(u),l=lastOf(u),rec=recommended()===u;const m=masteryOf(u),dn=isDone(u),ex=extraOf(u);
   const sc=b==null?`<span class="sc none">עוד לא תרגלת – בוא ננסה! 🌱</span>`:`<span class="sc"><b class="bestn">השיא: ${b}/100</b>${l!=null&&l!==b?` <small>· אחרון: ${l}</small>`:''}</span>`;
-  return `<div class="${cls} ${b===100?'done':''} ${rec?'next':''}" data-u="${u}" role="button" tabindex="0">
-    ${rec?'<span class="badge-start">מומלץ עכשיו</span>':''}${withNum?`<span class="num">${u}</span>`:''}<span class="ic">${ICONS[x.icon]}</span>
+  const mt=dn?`<span class="mline gold">🏆 הושלם! 7/7 כוכבים${ex?` · ועוד ${ex} תרגולים מושלמים ✨`:''}</span>`:`<span class="mline">${m===1?'כוכב אחד':m} מתוך 7${m===1?'':' כוכבים'}${m?'':' – כוכב על כל 100!'}</span>`;
+  return `<div class="${cls} ${b===100?'done':''} ${dn?'mastered':''} ${rec?'next':''}" data-u="${u}" role="button" tabindex="0">
+    ${dn?'<span class="badge-start badge-done">🏆 הושלם</span>':rec?'<span class="badge-start">מומלץ עכשיו</span>':''}${withNum?`<span class="num">${numOf(u)}</span>`:''}<span class="ic">${ICONS[x.icon]}</span>
     <span class="ubody"><h3>${x.title}</h3><p>${x.sub}</p><span class="ex">📘 ${x.ex}</span>${sc}
-      <span class="acts"><button class="btn green pBtn" data-u="${u}">▶ תרגול</button><button class="btn ghost lBtn" data-u="${u}">${lessonDone(u)?'📖 הסבר ✓':'📖 הסבר'}</button></span></span>
-    <span class="ustars">${st3(starsFor(b))}<small class="sn">${b==null?'':b+''}</small></span></div>`;}
+      <span class="mrow">${m7(m,dn?'gold':'')}${mt}</span>
+      <span class="acts"><button class="btn green pBtn" data-u="${u}">▶ תרגול</button><button class="btn ghost lBtn" data-u="${u}">${lessonDone(u)?'📖 הסבר ✓':'📖 הסבר'}</button><button class="btn chal chBtn ${chalCount(u)?'':'zero'}" data-u="${u}">🔥 היה מאתגר (${chalCount(u)})</button></span></span></div>`;}
 function bindCards(root){
   root.querySelectorAll('[data-u]').forEach(c=>{
     c.onclick=e=>{if(e.target.closest('button'))return;startPractice(parseU(c.dataset.u));};
     c.onkeydown=e=>{if(e.key==='Enter'&&e.target===c)startPractice(parseU(c.dataset.u));};});
   root.querySelectorAll('.pBtn').forEach(b=>b.onclick=e=>{e.stopPropagation();startPractice(parseU(b.dataset.u));});
+  root.querySelectorAll('.chBtn').forEach(b=>b.onclick=e=>{e.stopPropagation();startChallenge(parseU(b.dataset.u));});
   root.querySelectorAll('.lBtn').forEach(b=>b.onclick=e=>{e.stopPropagation();const u=parseU(b.dataset.u);openLesson(u,!lessonDone(u));});
 }
 function renderHome(){
-  const p=practicedCount(),avg=avgScore(),r=recommended();
+  const p=practicedCount(),d=doneCount(),t=totalMastery(),avg=avgScore(),r=recommended();
   $('#heroSay').innerHTML=heroMessage();
-  $('#stats').innerHTML=`<span class="pill">${starSvg()} כוכבים: ${SAVE.stars}</span><span class="pill">✅ נושאים שתרגלת: ${p}/9</span><span class="pill">🎯 ציון ממוצע: ${avg}</span>`;
-  $('#planSub').innerHTML=`הכל פתוח! 🔓 תבחר נושא מתי שאתה רוצה. <b>סדר מומלץ: 1 ← 9</b> (כמו בספר).`;
-  $('#pbarTxt').innerHTML=`<b>תרגלת ${p} מתוך 9 נושאים</b> · ציון ממוצע: <b>${avg}/100</b>${r?` · מומלץ עכשיו: <b>נושא ${r}</b>`:' · 🏆 100 בכל הנושאים!'}`;
-  $('#pbar').innerHTML=UNITS.map(x=>`<i class="s${starsFor(bestOf(x.id))} ${x.id===r?'cur':''}" title="נושא ${x.id}: ${bestOf(x.id)==null?'עוד לא תרגלת':bestOf(x.id)+'/100'}"></i>`).join('');
+  $('#stats').innerHTML=`<span class="pill">${starSvg()} כוכבים: ${t}/${MAST_KEYS.length*MAST_MAX}</span><span class="pill">🏆 נושאים שהושלמו: ${d}/10</span><span class="pill">🎯 ציון ממוצע: ${avg}</span>`;
+  $('#planSub').innerHTML=`הכל פתוח! 🔓 תבחר נושא מתי שאתה רוצה. <b>סדר מומלץ: 1 ← 10</b>. ⭐ כוכב על כל תרגול עם ציון 100 – 7 כוכבים = גביע 🏆`;
+  $('#pbarTxt').innerHTML=`<b>🏆 הושלמו ${d} מתוך 10 נושאים</b> · ⭐ <b>${t} כוכבים מתוך ${MAST_KEYS.length*MAST_MAX}</b>${r?` · מומלץ עכשיו: <b>נושא ${numOf(r)}</b>`:' · 🎉 כל הנושאים הושלמו!'}`;
+  $('#pbar').innerHTML=TOPICS.map(x=>{const m=masteryOf(x.id);return `<i class="s${m>=MAST_MAX?3:m>=4?2:m>=1?1:0} ${x.id===r?'cur':''}" title="נושא ${numOf(x.id)}: ${m}/7 כוכבים"></i>`;}).join('');
   const ct=continueTarget();
-  $('#contBtn').textContent=ct.kind==='mix'?'🏆 לאתגר הגדול':ct.kind==='lesson'?`▶ המשך מהמקום שעצרתי – נתחיל בהסבר קצר (נושא ${ct.u})`:`▶ המשך מהמקום שעצרתי – תרגול נושא ${ct.u}`;
+  $('#contBtn').textContent=ct.kind==='mix'?'🏆 לאתגר הגדול':ct.kind==='lesson'?`▶ המשך מהמקום שעצרתי – נתחיל בהסבר קצר (נושא ${numOf(ct.u)})`:`▶ המשך מהמקום שעצרתי – תרגול נושא ${numOf(ct.u)}`;
   $('#contBtn').onclick=()=>go(ct);
-  $('#units').innerHTML=UNITS.map(x=>cardHTML(x,'unit',true)).join('');
+  $('#units').innerHTML=TOPICS.map(x=>cardHTML(x,'unit',true)).join('');
   bindCards($('#units'));
-  $('#sidetrack').innerHTML=`<div class="sidehead"><span class="sidetag">🧭 מסלול צד · לא חובה</span><span class="sidenote">לא משפיע על 9 הנושאים</span></div>${cardHTML(ANGU,'sidecard',false)}`;
-  bindCards($('#sidetrack'));
   const mb=bestOf('mix');
   $('#extras').innerHTML=`<button class="mission big" id="goQuiz"><span class="ic">${ICONS.trophy}</span><span><h3>האתגר הגדול – 15 שאלות</h3><p>שאלות מכל הנושאים ביחד. כל תשובה נכונה בניסיון הראשון מקדמת את הציון (מתוך 100). ${mb==null?'':`השיא שלך: <b class="co">${mb}/100</b>`}</p></span></button>
     <button class="mission" id="goLab"><span class="ic">${ICONS.lab}</span><span><h3>מגרש החקירות</h3><p>גרור נקודות בחופשיות וגלה בעצמך!</p></span></button>`;
@@ -2007,7 +2211,7 @@ let LS=null;
 function openLesson(u,resume){const U=getU(u);const i=resume?Math.min(SAVE.lstep[u]||0,U.lesson.length-1):0;LS={u,unit:U,i,done:false};show('lesson');renderStep();}
 function renderStep(){
   const U=LS.unit,st=U.lesson[LS.i];SAVE.lstep[LS.u]=LS.i;persist();
-  $('#lTitle').innerHTML=`<span style="width:44px;height:44px;display:inline-block">${ICONS[U.icon]}</span>${U.id==='ang'?'':'יחידה '+U.id+': '}${U.title}`;
+  $('#lTitle').innerHTML=`<span style="width:44px;height:44px;display:inline-block">${ICONS[U.icon]}</span>${U.id==='ang'?'נושא 10: ':'יחידה '+U.id+': '}${U.title}`;
   $('#lSteps').innerHTML=U.lesson.map((_,k)=>`<i class="${k<LS.i?'on':k===LS.i?'cur':''}"></i>`).join('');
   say('#lTalk',st.say,null);$('#lTask').className='task';$('#lAns').innerHTML='';$('#lAns')._key=null;
   const next=$('#lNext');LS.q=st.q||null;LS.step=st;
@@ -2021,14 +2225,14 @@ function renderStep(){
   }else{
     LS.done=true;next.disabled=false;next.classList.add('pulse');$('#lTask').innerHTML=st.task?('🎯 '+st.task):'';
     if(st.angle){const P=makeAngleBoard($('#lPlane'),st.angle);LS.ctl={P};$('#lRead').innerHTML='';
-      if(st.explore)P.onTap=id=>{const ar=st.angle.arcs.find(a=>a.id===id);if(!ar)return;P.arcEls[id].classList.add('good');setTimeout(()=>P.arcEls[id]&&P.arcEls[id].classList.remove('good'),900);const nm=[ar.a,ar.v,ar.b];const eq=equivNames(st.angle,nm).filter((x,i,A)=>A.findIndex(y=>y.join('')===x.join(''))===i);const names=eq.slice(0,2).map(angN).join(' = ');
+      if(st.explore)P.onTap=id=>{const ar=st.angle.arcs.find(a=>a.id===id);if(!ar)return;P.arcEls[id].classList.add('good');setTimeout(()=>P.arcEls[id]&&P.arcEls[id].classList.remove('good'),900);const nm=[ar.a,ar.v,ar.b];const eq=equivNames(st.angle,nm).filter((x,i,A)=>A.findIndex(y=>y.join('')===x.join(''))===i);const names=eq.slice(0,4).map(angN).join(' = ');
         say('#lTalk',st.say+`<div class="okline">👆 הקשת שהקשת עליה: ${names}. הקודקוד: <b>${ar.v}</b> (האות האמצעית).</div>`,'happy');};}
     else{const P=makePlane($('#lPlane'),st.board);LS.ctl={P};const upd=()=>readout($('#lRead'),P,Object.keys(P.pts).filter(id=>P.pts[id].o.drag));P.onChange=upd;P.onDrop=upd;st.setup(P);P.refresh();upd();}
   }
 }
 $('#lPrev').onclick=()=>{if(LS.i>0){LS.i--;renderStep();}};
 $('#lNext').onclick=()=>{if(!LS.done)return;const U=LS.unit;if(LS.i<U.lesson.length-1){LS.i++;renderStep();return;}
-  const rec=US(U.id);const first=!rec.lesson;rec.lesson=true;delete SAVE.lstep[U.id];if(first)addStars(3);persist();sfx('win');confetti(2200,110);
+  const rec=US(U.id);const first=!rec.lesson;rec.lesson=true;delete SAVE.lstep[U.id];persist();sfx('win');confetti(2200,110);
   modal(`<div class="mascot mood-happy" style="margin:0 auto;width:110px;height:118px">${ROBO}</div><h2>סיימת את השיעור, אדם! 🎉</h2>
   <div class="sumstars">${starSvg('#ffbe0b','pop')}${starSvg('#ffbe0b','pop')}${starSvg('#ffbe0b','pop')}</div>
   <p style="font-size:20px">${first?'קיבלת 3 כוכבים!':'כבר יש לך את הכוכבים של השיעור הזה – אלוף!'}</p>
@@ -2051,18 +2255,55 @@ $('#sReset').onclick=openSandbox;$('#sGo').onclick=()=>startMix();
 /* ============ question sessions ============ */
 function buildQ(spec){const t=TPL[spec[0]];return t.b(...spec.slice(1));}
 function buildVariant(name,avoid,args){const t=TPL[name];for(let i=0;i<300;i++){let q;try{q=t.b(...(t.rv&&args?t.rv(...args):t.r()));}catch(e){continue;}if(q&&!avoid.has(q.key))return q;}return null;}
+/* ============ challenge pool ("היה מאתגר"): every question missed on the first try, per topic ============ */
+const CHAL_OK=2;   /* consecutive first-try correct answers (inside the pool practice) that remove a question */
+const CHAL_KEYS=['1','2','3','4','5','6','7','8','9','ang'];
+function chalMap(u){if(!SAVE.chal||typeof SAVE.chal!=='object'||Array.isArray(SAVE.chal))SAVE.chal={};let p=SAVE.chal[u];if(!p||typeof p!=='object'||Array.isArray(p))p=SAVE.chal[u]={};return p;}
+const chalCount=u=>Object.keys(chalMap(u)).length;
+function chalClean(){/* drop damaged / unknown entries (old or hand-edited saves) so nothing can crash later */
+  try{if(!SAVE.chal||typeof SAVE.chal!=='object'||Array.isArray(SAVE.chal))SAVE.chal={};
+    Object.keys(SAVE.chal).forEach(u=>{if(!CHAL_KEYS.includes(String(u))){delete SAVE.chal[u];return;}const p=chalMap(u);
+      Object.keys(p).forEach(k=>{const r=p[k];const e=r&&r.e;if(!e||typeof e.key!=='string'||e.key!==k||!TPL[e.tpl]||!Array.isArray(e.args)||!(e.lvl>=0&&e.lvl<=2)){delete p[k];return;}r.s=Number.isFinite(+r.s)?Math.max(0,Math.floor(+r.s)):0;});});
+  }catch(e){SAVE.chal={};}}
+chalClean();
+const chalPoolKey=(q)=>Q&&Q.u==='mix'?String(q.entry&&q.entry.u):String(Q.u);
+function chalWrong(q){if(!q||!q.entry)return;const pk=chalPoolKey(q);if(!CHAL_KEYS.includes(pk))return;const p=chalMap(pk);const e=q.entry;
+  if(Q.pool){if(p[e.key])p[e.key].s=0;}else p[e.key]={e:{u:e.u,lvl:e.lvl,tpl:e.tpl,args:e.args,key:e.key},s:0};persist();}
+function chalRight(q){if(!q||!q.entry)return;const p=chalMap(String(Q.u));const r=p[q.entry.key];if(!r)return;r.s=(r.s||0)+1;if(r.s>=CHAL_OK){delete p[q.entry.key];Q.removed=(Q.removed||0)+1;Q.removedIds=(Q.removedIds||[]).concat(q.entry.key);}persist();}
+function startChallenge(u){closeModal();const p=chalMap(u);const ents=shuffle(Object.values(p).map(r=>r.e));const qs=[];
+  for(const e of ents){if(qs.length>=SESSION_N)break;try{qs.push(makeQ(e));}catch(err){delete p[e.key];}}
+  persist();
+  if(!qs.length){modal(`<div class="mascot" style="margin:0 auto;width:90px;height:96px">${ROBO}</div><h2>אין שאלות מאתגרות — הופה! 🎉</h2><p style="font-size:19px;line-height:1.6">בנושא הזה עוד לא נשארו שאלות שהיו קשות. כשתטעה בשאלה בתרגול רגיל – היא תחכה לך כאן, ואפשר יהיה לתרגל אותה שוב.</p><button class="btn green" onclick="closeModal()">מעולה! 👍</button>`);return;}
+  const U=getU(u);const title=`🔥 היה מאתגר · ${u==='ang'?'זוויות':U.title}`;
+  Q={mode:'practice',pool:true,u,title,qs,idx:0,res:[],score:0,streak:0,first:true,done:false,removed:0};show('quiz');renderQ();}
+function finishPool(){
+  Q.finished=true;const u=Q.u,n=Q.qs.length,c=Q.score,score=scoreFor(c,n);persist();show('summary');
+  const left=chalCount(u),rm=Q.removed||0;
+  const msg=score===100?'מושלם! כל השאלות המאתגרות נכונות בניסיון הראשון! 🌟':score>=60?'יפה מאוד! אתה משתפר בשאלות הקשות 💪':'לא נורא – שאלות מאתגרות הן בדיוק בשביל ללמוד מהן 🌱';
+  const note=left===0?'🎉 <b>אין יותר שאלות מאתגרות בנושא הזה — הופה!</b>':`נשארו עוד <b>${left}</b> שאלות מאתגרות. כל שאלה יוצאת מהרשימה אחרי <b>2 תשובות נכונות ברצף</b> בניסיון הראשון.`;
+  const btns=[];if(left>0)btns.push(`<button class="btn orange" id="again">🔥 עוד תרגול מאתגר (${left})</button>`);
+  btns.push(`<button class="btn green" id="regular">▶ תרגול רגיל</button>`,'<button class="btn ghost" id="toMap">🗺️ למסלול</button>');
+  $('#sumCard').innerHTML=`<div class="talk mood-happy" style="justify-content:center"><div class="mascot" style="width:120px;height:130px">${ROBO}</div></div>
+   <div class="qnum" style="font-size:18px">${Q.title}</div><div class="sumscore" id="sumScore">${score}<small>/100</small></div>
+   <div class="mmsg" id="mMsg">🔥 תרגול מאתגר – הציון כאן לא משפיע על הכוכבים. ${rm?`הוצאת <b>${rm}</b> שאלות מהרשימה! ✅`:'המשך כך!'}</div>
+   <div class="summsg">${msg}</div><div class="sumsub">נכון בניסיון הראשון: <b>${c} מתוך ${n}</b><br>${note}</div>
+   <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">${btns.join('')}</div>`;
+  const on=(id,f)=>{const e=$('#'+id);if(e)e.onclick=f;};
+  on('again',()=>startChallenge(u));on('regular',()=>startPractice(u));on('toMap',()=>show('home'));
+  if(score===100){sfx('win');confetti(3500,200);}else sfx('good');
+}
 function startPractice(u){closeModal();const qs=drawSession(u);
-  const title=u==='ang'?'🧭 תרגול זוויות':u==='mix'?'🏆 האתגר הגדול':`יחידה ${u} · ${UNITS[u-1].title}`;
+  const title=u==='ang'?'נושא 10 · זוויות':u==='mix'?'🏆 האתגר הגדול':`יחידה ${u} · ${UNITS[u-1].title}`;
   Q={mode:'practice',u,title,qs,idx:0,res:[],score:0,streak:0,first:true,done:false};show('quiz');renderQ();}
 function startMix(){startPractice('mix');}
 function renderProg(){
   $('#qProg').innerHTML=Q.qs.map((_,k)=>{const r=Q.res[k];return `<span class="${r==='st'?'st':r==='ok'?'ok':k===Q.idx&&!Q.finished?'cur':''}">${r==='st'?starSvg():r==='ok'?checkSvg:''}</span>`;}).join('');
-  $('#qScore').innerHTML=`${starSvg('#fff')} <span class="co">${Q.score}/${SESSION_N}</span>`;
+  $('#qScore').innerHTML=`${starSvg('#fff')} <span class="co">${Q.score}/${Q.qs.length}</span>`;
   $('#qStreak').innerHTML=Q.streak>=2?`🔥 רצף של ${Q.streak}!`:'';
 }
 function renderQ(){
   const q=Q.qs[Q.idx];Q.first=true;Q.done=false;
-  $('#qNum').textContent=`${Q.title} · שאלה ${Q.idx+1} מתוך ${SESSION_N}`;$('#qPrompt').innerHTML=q.prompt;$('#qNext').style.display='none';
+  $('#qNum').textContent=`${Q.title} · שאלה ${Q.idx+1} מתוך ${Q.qs.length}`;$('#qPrompt').innerHTML=q.prompt;$('#qNext').style.display='none';
   Q.ctl=mountQ(q,{plane:'#qPlane',ans:'#qAns',read:'#qRead',auto:false,quiz:true,say:(h,m)=>say('#qTalk',h,m),isDone:()=>Q.done,result:answer});Q.P=Q.ctl.P;
   renderProg();
 }
@@ -2073,40 +2314,56 @@ let Q=null;
 function answer(ok){
   const q=Q.qs[Q.idx];
   if(ok){Q.done=true;Q.P.locked=true;Q.res[Q.idx]=Q.first?'st':'ok';
-    if(Q.first){Q.score++;Q.streak++;addStars(1);}
+    if(Q.first){Q.score++;Q.streak++;if(Q.pool)chalRight(q);}
     sfx('good');say('#qTalk',(Q.first?pick(PRAISE):pick(RETRY_PRAISE)),'happy');
     const qc=$('#qCheck');if(qc)qc.style.display='none';
     if(q.after)q.after(Q.P);readout($('#qRead'),Q.P,q.read||[]);
-    const btn=$('#qNext');btn.style.display='';btn.textContent=Q.idx===SESSION_N-1?'לתוצאה 🏁':'לשאלה הבאה ←';
+    const btn=$('#qNext');btn.style.display='';btn.textContent=Q.idx===Q.qs.length-1?'לתוצאה 🏁':'לשאלה הבאה ←';
     renderProg();
-  }else{Q.first=false;Q.streak=0;sfx('bad');say('#qTalk',`${pick(OOPS)}<br>💡 ${q.hint}`,'oops');renderProg();}
+  }else{if(Q.first)chalWrong(q);Q.first=false;Q.streak=0;sfx('bad');say('#qTalk',`${pick(OOPS)}<br>💡 ${q.hint}`,'oops');renderProg();}
 }
-$('#qNext').onclick=()=>{if(!Q||!Q.done)return;if(Q.idx<SESSION_N-1){Q.idx++;renderQ();}else finishRound();};
+$('#qNext').onclick=()=>{if(!Q||!Q.done)return;if(Q.idx<Q.qs.length-1){Q.idx++;renderQ();}else finishRound();};
 function resultMsg(score,isAng){
   const nm=isAng?'הזוויות':'הצירים';
   if(score===100)return['100! מושלם! 🏆','ענית נכון על כל 15 השאלות כבר בניסיון הראשון. אדם, אתה אלוף '+nm+'! רובי גאה בך מאוד!'];
   if(score>=85)return['מצוין! איזה יופי! 🌟','כמעט מושלם – אתה ממש שולט בנושא. עוד תרגול קטן וזה 100!'];
   if(score>=60)return['יפה מאוד, אדם! 💪','עבודה טובה! כל פעם אתה משתפר. אפשר לנסות שוב ל-15 שאלות חדשות ולהגיע גבוה יותר.'];
   return['התחלה טובה! 🌱','ככה לומדים – מנסים, טועים ומצליחים. כדאי להציץ ב"הסבר" 📖 ואז לנסות שוב, עם שאלות חדשות.'];}
+function masteryMsg(score,u,info){/* info: {before,after,earned,completedNow,extra} */
+  const isT=u!=='mix';if(!isT)return score===100?'🏆 100 באתגר הגדול!':'';
+  const m=info.after,left=MAST_MAX-m;
+  if(score===100){
+    if(info.completedNow)return `🏆 <b>הושלם! 7 מתוך 7 כוכבים!</b> אדם, סיימת את הנושא הזה בגדול – קיבלת גביע! אפשר להמשיך לתרגל, כל 100 נוסף הוא עוד כוכב זהב ✨`;
+    if(info.extra)return `✨ עוד תרגול מושלם! הנושא כבר הושלם (7/7) – זה כוכב זהב נוסף (סה״כ ${info.extraN}). גאים בך!`;
+    return `⭐ <b>כוכב ${m} מתוך 7!</b> ${left===1?'נשאר עוד <b>כוכב אחד</b> אחרון להשלמת הנושא!':`נשארו עוד <b>${left} כוכבים</b> להשלמת הנושא.`} אפשר עוד 15 שאלות חדשות!`;}
+  if(info.done)return `הנושא הזה כבר הושלם 🏆 (7/7). ציון ${score} – אפשר לנסות שוב ל-100 ולהוסיף כוכב זהב.`;
+  return `יש לך <b>${starsW(m)} מתוך 7</b> בנושא הזה. כוכב מקבלים רק על <b>100</b> (כל 15 נכונות בניסיון הראשון) – נשאר${left===1?' עוד כוכב אחד':'ו עוד '+left+' כוכבים'}. נסה שוב עם 15 שאלות חדשות, אתה יכול! 💪`;}
 function finishRound(){
+  if(Q.pool)return finishPool();
   Q.finished=true;const c=Q.score,score=scoreFor(c),u=Q.u;const rec=US(u);const prev=rec.best;
   rec.last=score;rec.n=(rec.n||0)+1;const improved=prev==null||score>prev;if(improved)rec.best=score;
-  const first100=score===100&&prev!==100;if(first100)addStars(10);
+  /* 7-star mastery: ONLY a perfect 100 adds a star; lower scores never add or remove one */
+  const before=masteryOf(u),wasDone=before>=MAST_MAX;let completedNow=false,extra=false;
+  if(score===100&&u!=='mix'){if(before<MAST_MAX){rec.mast=before+1;completedNow=rec.mast>=MAST_MAX;}else{rec.extra=(rec.extra||0)+1;extra=true;}}
+  const after=u==='mix'?0:masteryOf(u);
   persist();show('summary');
-  const [msg,sub]=resultMsg(score,u==='ang');const stars=starsFor(score);const rcm=recommended();
+  const info={before,after,completedNow,extra,extraN:extraOf(u),done:wasDone};
+  const [msg,sub]=resultMsg(score,u==='ang');const rcm=recommended();
   const btns=[`<button class="btn orange" id="again">🔄 עוד 15 שאלות חדשות</button>`];
   if(u!=='mix')btns.push(`<button class="btn" id="toLesson">📖 הסבר</button>`);
-  if(rcm&&rcm!==u)btns.push(`<button class="btn green" id="goNext">➡ לנושא המומלץ ${rcm}</button>`);
+  if(rcm&&rcm!==u)btns.push(`<button class="btn green" id="goNext">➡ לנושא המומלץ ${numOf(rcm)}</button>`);
   btns.push('<button class="btn ghost" id="toMap">🗺️ למסלול</button>');
+  const row=u==='mix'?'':`<div class="sumstars m7row ${after>=MAST_MAX?'gold':''}">${Array.from({length:MAST_MAX},(_,i)=>`<span>${starSvg(i<after?'#ffbe0b':'#e3e8f4',(i===after-1&&score===100&&!extra)?'pop':'')}</span>`).join('')}</div>`;
   $('#sumCard').innerHTML=`${score===100?`<div class="trophy">${ICONS.trophy}</div>`:`<div class="talk mood-happy" style="justify-content:center"><div class="mascot" style="width:120px;height:130px">${ROBO}</div></div>`}
    <div class="qnum" style="font-size:18px">${Q.title}</div><div class="sumscore" id="sumScore">${score}<small>/100</small></div>
-   <div class="sumstars">${[0,1,2].map(i=>`<span>${starSvg(i<stars?'#ffbe0b':'#e6ebf5','pop')}</span>`).join('')}</div>
-   <div class="summsg">${msg}</div><div class="sumsub">${sub}<br>נכון בניסיון הראשון: <b>${c} מתוך ${SESSION_N}</b> · השיא שלך: <span class="co">${rec.best}/100</span>${improved&&prev!=null?'<br>🎉 זה שיא חדש!':''}${first100?'<br>⭐ בונוס 100: +10 כוכבים!':''}</div>
+   ${row}
+   <div class="mmsg ${score===100?'good':''}" id="mMsg">${masteryMsg(score,u,info)}</div>
+   <div class="summsg">${msg}</div><div class="sumsub">${sub}<br>נכון בניסיון הראשון: <b>${c} מתוך ${Q.qs.length}</b> · השיא שלך: <span class="co">${rec.best}/100</span>${improved&&prev!=null?'<br>🎉 זה שיא חדש!':''}</div>
    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">${btns.join('')}</div>`;
-  document.querySelectorAll('.sumstars span').forEach((e,k)=>{e.firstChild.style.animationDelay=(k*90)+'ms';});
+  document.querySelectorAll('.sumstars span').forEach((e,k)=>{if(e.firstChild)e.firstChild.style.animationDelay=(k*90)+'ms';});
   const on=(id,f)=>{const e=$('#'+id);if(e)e.onclick=f;};
   on('again',()=>startPractice(u));on('toMap',()=>show('home'));on('toLesson',()=>openLesson(u,!lessonDone(u)));on('goNext',()=>startPractice(rcm));
-  if(score===100){sfx('win');confetti(6000,320);CONF_T=setTimeout(()=>confetti(3500,160),1800);}else sfx('good');
+  if(score===100){sfx('win');confetti(completedNow?9000:6000,completedNow?520:320);CONF_T=setTimeout(()=>confetti(3500,160),1800);}else sfx('good');
 }
 
 /* keyboard support */
@@ -2115,7 +2372,7 @@ document.addEventListener('keydown',e=>{
   if($('#quiz').classList.contains('on')){const a=$('#qAns');if(a._key&&!Q.done){a._key(e.key);return;}if(e.key==='Enter'&&Q.done)$('#qNext').click();}
   else if($('#lesson').classList.contains('on')){const a=$('#lAns');if(a._key&&!LS.done){a._key(e.key);return;}if(e.key==='Enter'&&!$('#modal').classList.contains('on')&&LS.done)$('#lNext').click();}
 });
-window.__app={get SAVE(){return SAVE;},UNITS,TPL,buildQ,buildVariant,get Q(){return Q;},get LS(){return LS;},unitOpen,lessonDone,mountQ,makePlane,ANGU,makeAngleBoard,diag,canonName,canonArc,equivNames,labelPos,validSpec,nextStep:continueTarget,startPractice,renderQ,openUnit,openLesson,renderStep,startMix,show,finishRound,getBank,drawSession,makeQ,scoreFor,starsFor,recommended,migrateSave,bestOf,lastOf,practicedCount,avgScore,SESSION_N,BANK_N};
+window.__app={get SAVE(){return SAVE;},UNITS,TPL,buildQ,buildVariant,get Q(){return Q;},get LS(){return LS;},unitOpen,lessonDone,mountQ,makePlane,ANGU,makeAngleBoard,diag,canonName,canonArc,equivNames,labelPos,validSpec,nextStep:continueTarget,startPractice,renderQ,openUnit,openLesson,renderStep,startMix,show,finishRound,getBank,drawSession,makeQ,scoreFor,answerQ:answer,masteryOf,isDone,extraOf,startChallenge,chalCount,chalMap,chalClean,finishPool,totalMastery,doneCount,recommended,migrateSave,bestOf,lastOf,practicedCount,avgScore,SESSION_N,BANK_N};
 persist();renderHome();
 
 </script>
