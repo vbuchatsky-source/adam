@@ -2215,7 +2215,7 @@ function recordAttempt(){if(!Q||Q.recorded)return null;Q.recorded=true;const qt=
   const a={t:Date.now(),u:String(Q.u),m:Q.pool?'pool':Q.mode==='stage'?'stage':'mix',i:Q.mode==='stage'?Q.stage:null,c:Q.score,n:Q.qs.length,d:Math.round(qt.reduce((x,y)=>x+(y||0),0)),cs:Math.round(fs.reduce((x,y)=>x+y,0)*10)/10};
   SAVE.att.push(a);if(SAVE.att.length>ATT_CAP)SAVE.att.splice(0,SAVE.att.length-ATT_CAP);persistSafe();return a;}
 const mmss=s=>{s=Math.max(0,Math.round(s));const m=Math.floor(s/60),x=s%60;return m?`${m}:${String(x).padStart(2,'0')} דק׳`:`${x} שניות`;};
-function timeLine(a){if(!a)return'';const avg=a.n?a.d/a.n:0;return `<div class="timeline">⏱️ זמן השלב: <b>${mmss(a.d)}</b> · בממוצע <b>${Math.round(avg)}</b> שניות לשאלה <span class="tl-note">(בלי לחץ – זה רק כדי לראות שיפור 🙂)</span></div>`;}
+function timeLine(a){if(!a)return'';const avg=a.n?a.d/a.n:0;return `<div class="timeline">⏱️ ${a&&a.m==='exam'?'זמן המבחן':'זמן השלב'}: <b>${mmss(a.d)}</b> · בממוצע <b>${Math.round(avg)}</b> שניות לשאלה <span class="tl-note">(בלי לחץ – זה רק כדי לראות שיפור 🙂)</span></div>`;}
 /* ---- statistics ---- */
 const pad2=n=>String(n).padStart(2,'0');
 const dayKey=t=>{const d=new Date(t);return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;};
