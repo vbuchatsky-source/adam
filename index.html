@@ -338,6 +338,8 @@ body{font-family:"Rubik","Varela Round","Segoe UI","Arial Hebrew",Arial,sans-ser
 .examMode .wrongpt{filter:none!important}
 .rdots i.bad{background:#ff4d6d}
 .exreview{text-align:right;margin:10px 0}
+.prog span.bad{background:#ffe0e6;color:#e63946;font-weight:900}
+.opt.showright{outline:4px solid #06d6a0}
 /* ===== angles side-track ===== */
 .sidetrack{margin:22px 0 8px;padding:14px 12px 16px;border-radius:30px;background:repeating-linear-gradient(45deg,#f3eeff,#f3eeff 14px,#ece5ff 14px,#ece5ff 28px);border:3px dashed #a78bfa}
 .sidehead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0 4px 10px}
@@ -2143,7 +2145,7 @@ const STAGES=Array.from({length:13},(_,i)=>i<10?{i,kind:'star',n:7,from:i*7,to:i
 const STAGE_LABELS=['קל מאוד','קל מאוד','קל','קל','קל+','בינוני','בינוני','בינוני+','מאתגר','מאתגר','קשה','קשה מאוד','אתגר האלופים'];
 const stageEntries=(u,i)=>getBank(u).slice(STAGES[i].from,STAGES[i].to);
 /* a question is rebuilt from its entry with a seed derived from its id, so it always looks exactly the same (options order, distractors) */
-function makeQ(e){let q=null,err=null;for(let i=0;i<80&&!q;i++){try{q=withSeed(hashStr('q:'+e.key+':'+i),()=>TPL[e.tpl].b(...e.args));}catch(x){err=x;}}if(!q)throw err;q.id=e.key;q.unit=e.u;q.lvl=e.lvl;q.tpl=e.tpl;q.entry=e;return q;}
+function makeQ(e){let q=null,err=null;for(let i=0;i<80&&!q;i++){try{q=withSeed(hashStr('q:'+e.key+(e.vs?':v'+e.vs:'')+':'+i),()=>TPL[e.tpl].b(...e.args));}catch(x){err=x;}}if(!q)throw err;q.id=e.key;q.unit=e.u;q.lvl=e.lvl;q.tpl=e.tpl;q.entry=e;return q;}
 /* choose n entries; for mixed topics (final exam / big challenge) spread them over different units */
 function pickN(arr,n,spread){arr=shuffle(arr);if(!spread)return arr.slice(0,n);
   const groups={};arr.forEach(e=>{(groups[e.u]=groups[e.u]||[]).push(e);});const order=shuffle(Object.keys(groups));const out=[];
@@ -2162,6 +2164,40 @@ function drawSession(u){
   es.forEach(e=>{let q;try{q=makeQ(e);}catch(err){q=null;}if(q)qs.push(q);});
   /* (a builder failing would be a bug; fuzz tests make sure it never happens) */
   return qs;}
+/* ============ v9: per-attempt variants of a stage question (same template, same signature, close difficulty) ============ */
+function qSig(q){const b=q.board||{};const nc=q.options?q.options.filter(o=>o.correct).length:0;
+  return [q.kind,q.nf||1,!!q.neg,!!q.tf,q.options?q.options.length:0,nc,b.ux||1,b.uy||1,b.nums!==false,b.x0,b.y0,b.x1,b.y1,q.fl?q.fl.length:0].join('|');}
+const numLeaves=a=>{const o=[];(function w(x){if(Array.isArray(x))x.forEach(w);else if(typeof x==='number')o.push(x);})(a);return o;};
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a;};
+function perturb(args){const ns=numLeaves(args).filter(n=>Number.isInteger(n)&&n!==0);const st=ns.length?Math.max(1,ns.reduce((g,n)=>gcd(g,n),0)):1;
+  return (function w(x){if(Array.isArray(x))return x.map(w);if(typeof x==='number'&&Number.isInteger(x)&&x!==0&&Math.abs(x)<1000){if(Math.random()<.35)return x;let y=x+st*(Math.random()<.5?-1:1)*(1+Math.floor(Math.random()*2));if(Math.sign(y)!==Math.sign(x))y=x;return y;}return x;})(args);}
+const signPat=a=>numLeaves(a).map(n=>Math.abs(n)>=1000?'s':Math.sign(n)).join('');
+function qValid(q){try{if(q.options){const hs=q.options.map(o=>o.html);if(new Set(hs).size!==hs.length||!q.options.some(o=>o.correct))return false;}
+  if(q.kind==='num'&&q.answer!=null&&q.accept&&!q.accept(q.answer))return false;
+  const pts=[];(function w(x){if(Array.isArray(x)){if(x.length===2&&x.every(n=>typeof n==='number'))pts.push(x.join(','));else x.forEach(w);}})(q.entryArgs||[]);
+  return true;}catch(e){return false;}}
+const dupPts=a=>{const L=[];(function w(x){if(Array.isArray(x)){if(x.length===2&&x.every(n=>typeof n==='number'))L.push(x.join(','));else x.forEach(w);}})(a);return new Set(L).size!==L.length;};
+const pairsOf=a=>{const L=[];(function w(x){if(Array.isArray(x)){if(x.length===2&&x.every(n=>typeof n==='number'))L.push(x);else x.forEach(w);}})(a);return L;};
+const inBoard=(a,q)=>{const b=Object.assign({},STD,q.board||{});return pairsOf(a).every(([x,y])=>x>=b.x0&&x<=b.x1&&y>=b.y0&&y<=b.y1);};
+const onGridV=(a,q)=>{const b=Object.assign({},STD,q.board||{});return pairsOf(a).every(([x,y])=>Number.isInteger((x-b.x0)/b.ux)&&Number.isInteger((y-b.y0)/b.uy));};
+let VHOST=null;
+function rendersOk(e){try{const q=makeQ(e);if(!VHOST){VHOST=document.createElement('div');VHOST.style.cssText='position:absolute;left:-9999px;top:0;width:400px;visibility:hidden';document.body.appendChild(VHOST);}
+  const P=q.angle?makeAngleBoard(VHOST,q.angle):makePlane(VHOST,q.board);q.setup&&q.setup(P);P.refresh&&P.refresh();const h=VHOST.innerHTML;let sol=-1;if(q.kind==='drag'&&q.check&&P.pts){const ds=Object.keys(P.pts).filter(id=>P.pts[id].o&&P.pts[id].o.drag);if(ds.length===1){const b=Object.assign({},STD,q.board||{});sol=0;for(let x=b.x0;x<=b.x1;x+=b.ux)for(let y=b.y0;y<=b.y1;y+=b.uy){P.pts[ds[0]].x=x;P.pts[ds[0]].y=y;try{if(q.check(P))sol++;}catch(z){}}}}VHOST.innerHTML='';e.__sol=sol;
+  if(/NaN|undefined|Infinity/.test(h)||/NaN|undefined/.test(String(q.prompt)))return false;if(q.options&&q.options.some(o=>/NaN|undefined/.test(o.html)))return false;return true;}catch(x){return false;}}
+const VAR_CACHE={};
+function makeVariant(e,att){if(!att)return e;const ck=e.u+':'+e.rank+':'+e.key+'#'+att;if(VAR_CACHE[ck])return VAR_CACHE[ck];
+  const t=TPL[e.tpl];let base;try{base=makeQ(e);}catch(x){return e;}const sig=qSig(base),sp=signPat(e.args),f0=e.fine!=null?e.fine:fineScore(base,e);
+  const cands=[];withSeed(hashStr('var:'+e.key+':'+att),()=>{
+    for(let i=0;i<70;i++){let a;try{a=t.rv?t.rv(...e.args):i%2&&t.r?t.r():perturb(e.args);}catch(x){continue;}
+      if(!t.rv&&signPat(a)!==sp)continue;let q;try{q=t.b(...a);}catch(x){continue;}
+      if(!q||!q.key||q.key===e.key||qSig(q)!==sig)continue;if(qValid(base)&&!qValid(q))continue;if(!dupPts(e.args)&&dupPts(a))continue;if(!q.angle&&inBoard(e.args,base)&&!inBoard(a,q))continue;if(!q.angle&&onGridV(e.args,base)&&!onGridV(a,q))continue;if(cands.some(c=>c.key===q.key))continue;
+      cands.push({a,key:q.key,d:Math.abs(fineScore(q,{tpl:e.tpl,key:q.key})-f0)});}});
+  let v=null;cands.sort((x,y)=>x.d-y.d);const top=cands.slice(0,Math.min(4,cands.length));const st0=hashStr(e.key+':'+att);
+  const ok0=rendersOk(e);const sol0=e.__sol;delete e.__sol;
+  for(let j=0;j<cands.length&&!v;j++){const c=j<top.length?top[(st0+j)%top.length]:cands[j];const cv={u:e.u,lvl:e.lvl,tpl:e.tpl,args:c.a,key:c.key,base:e.key,rank:e.rank,fine:e.fine,vs:att};if(!ok0||(rendersOk(cv)&&(sol0<0||cv.__sol===sol0)))v=cv;delete cv.__sol;}
+  if(v){}
+  else v={u:e.u,lvl:e.lvl,tpl:e.tpl,args:e.args,key:e.key,base:e.key,rank:e.rank,fine:e.fine,vs:att};/* fallback: same numbers, reshuffled options */
+  return VAR_CACHE[ck]=v;}
 
 /* ============ v7: timing, mistake log, attempt history, progress screen ============ */
 const LOG_CAP=500,ATT_CAP=3000,LOG_KEYS=['1','2','3','4','5','6','7','8','9','ang'];
@@ -2201,16 +2237,16 @@ function correctTxt(q,P){try{
   if(q.kind==='mc')return q.options.filter(o=>o.correct).map(o=>clip(o.html,600)).join(' · ');
   if(q.kind==='multi')return q.options.filter(o=>o.correct).map(o=>clip(o.html,600)).join(' · ');
   if(q.kind==='num'&&q.answer!=null)return numTxt(q,q.answer);
-  if(q.kind==='tap'&&P){const ids=q.angle?(q.angle.arcs||[]).map(a=>a.id).concat(Object.keys(P.pts||{})):Object.keys(P.pts||{});const ok=[...new Set(ids)].filter(id=>{try{return q.tapCheck(id);}catch(e){return false;}});if(ok.length)return ok.map(id=>tapName(q,id)).join(' או ');}
+  if(q.kind==='tap'&&P){const ids=q.angle?(q.angle.arcs||[]).map(a=>a.id).concat(Object.keys(P.pts||{}),Object.keys(q.angle.pts||{})):Object.keys(P.pts||{});const ok=[...new Set(ids)].filter(id=>{try{return q.tapCheck(id);}catch(e){return false;}});if(ok.length)return ok.map(id=>tapName(q,id)).join(' או ');}
 }catch(e){}return '';}
 const placeLabel=()=>!Q?'':Q.pool?'🔥 היה מאתגר':Q.mode==='stage'?stageName(Q.stage):'🏆 האתגר הגדול';
 /* ---- hooks called from the quiz ---- */
 function logWrong(q,given,secs){if(!q||!q.entry)return;const pk=Q.u==='mix'?String(q.entry.u):String(Q.u);if(!LOG_KEYS.includes(pk))return;const e=q.entry;
-  const r={t:Date.now(),e:{u:e.u,lvl:e.lvl,tpl:e.tpl,args:e.args,key:e.key},st:placeLabel(),g:[givenTxt(q,given)],c:correctTxt(q,Q.P),s:Math.round(secs),pr:clip(String(q.prompt||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' '),200),fx:false};
+  const r={t:Date.now(),e:{u:e.u,lvl:e.lvl,tpl:e.tpl,args:e.args,key:e.key,vs:e.vs||0,base:e.base||e.key},st:placeLabel(),g:[givenTxt(q,given)],c:correctTxt(q,Q.P),s:Math.round(secs),pr:clip(String(q.prompt||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' '),200),fx:false};
   const L=mlogOf(pk);L.push(r);if(L.length>LOG_CAP)L.splice(0,L.length-LOG_CAP);Q.curLog=r;persistSafe();}
 function logRetryWrong(given){const r=Q&&Q.curLog;if(r&&r.g.length<4){r.g.push(givenTxt(Q.qs[Q.idx],given));persistSafe();}}
 function logFixed(secs){const r=Q&&Q.curLog;if(r){r.fx=true;r.s2=Math.round(secs);persistSafe();}}
-function markOk(q){if(q&&q.entry){SAVE.qok[q.entry.key]=Date.now();}}
+function markOk(q){if(q&&q.entry){const t=Date.now();SAVE.qok[q.entry.key]=t;if(q.entry.base)SAVE.qok[q.entry.base]=t;}}
 function recordAttempt(){if(!Q||Q.recorded)return null;Q.recorded=true;const qt=Q.qt||[];const fs=Q.res.map((r,i)=>r==='st'?(qt[i]||0):0);
   const a={t:Date.now(),u:String(Q.u),m:Q.pool?'pool':Q.mode==='stage'?'stage':'mix',i:Q.mode==='stage'?Q.stage:null,c:Q.score,n:Q.qs.length,d:Math.round(qt.reduce((x,y)=>x+(y||0),0)),cs:Math.round(fs.reduce((x,y)=>x+y,0)*10)/10};
   SAVE.att.push(a);if(SAVE.att.length>ATT_CAP)SAVE.att.splice(0,SAVE.att.length-ATT_CAP);persistSafe();return a;}
@@ -2248,7 +2284,7 @@ function chartsBlock(atts){const S=series(atts);
 let PV={u:null,shown:30};
 function openProgress(u){closeModal();PV={u:u==null?null:String(u),shown:30};show('progress');renderProgress();}
 function totalsOf(atts){const c=atts.reduce((s,a)=>s+a.c,0),n=atts.reduce((s,a)=>s+a.n,0),d=atts.reduce((s,a)=>s+(a.d||0),0);return{c,n,d,pct:n?Math.round(c/n*100):null};}
-function isSolvedLater(r){const t=SAVE.qok[r.e.key];return t&&t>r.t;}
+function isSolvedLater(r){const t=Math.max(SAVE.qok[r.e.key]||0,SAVE.qok[r.e.base]||0);return t&&t>r.t;}
 function mistakeItem(r,idx){const later=isSolvedLater(r),pending=!later&&!!(SAVE.chal&&SAVE.chal[String(r.e.u)]&&SAVE.chal[String(r.e.u)][r.e.key]);
   let prompt=r.pr;try{prompt=makeQ(r.e).prompt;}catch(e){}
   const badge=later?'<span class="mb ok">✅ נפתרה נכון אחר כך</span>':r.fx?'<span class="mb fx">🔁 תוקנה באותה שאלה</span>':'';
@@ -2376,7 +2412,7 @@ function migrateSave(){
     SAVE.ver=5;
   }catch(e){SAVE.ver=5;SAVE.seen=SAVE.seen||{};}
 }
-migrateSave();progClean();SAVE.ver=7;
+migrateSave();progClean();SAVE.ver=8;
 const st3=n=>[0,1,2].map(i=>starSvg(i<n?'#ffbe0b':'#e6ebf5')).join('');
 function continueTarget(){const r=recommended();if(r==null)return{kind:'mix'};if(!lessonDone(r)&&!triedAny(r))return{kind:'lesson',u:r};return{kind:'stage',u:r,i:nextStage(r)};}
 function go(t){if(!t||t.kind==='mix')return startPractice('mix');if(t.kind==='lesson')openLesson(t.u,true);else startStage(t.u,t.i);}
@@ -2516,7 +2552,7 @@ function chalClean(){/* drop damaged / unknown entries (old or hand-edited saves
 chalClean();
 const chalPoolKey=(q)=>Q&&Q.u==='mix'?String(q.entry&&q.entry.u):String(Q.u);
 function chalWrong(q){if(!q||!q.entry)return;const pk=chalPoolKey(q);if(!CHAL_KEYS.includes(pk))return;const p=chalMap(pk);const e=q.entry;
-  if(Q.pool){if(p[e.key])p[e.key].s=0;}else p[e.key]={e:{u:e.u,lvl:e.lvl,tpl:e.tpl,args:e.args,key:e.key},s:0};persist();}
+  if(Q.pool){if(p[e.key])p[e.key].s=0;}else p[e.key]={e:{u:e.u,lvl:e.lvl,tpl:e.tpl,args:e.args,key:e.key,vs:e.vs||0,base:e.base||e.key},s:0};persist();}
 function chalRight(q){if(!q||!q.entry)return;const p=chalMap(String(Q.u));const r=p[q.entry.key];if(!r)return;r.s=(r.s||0)+1;if(r.s>=CHAL_OK){delete p[q.entry.key];Q.removed=(Q.removed||0)+1;Q.removedIds=(Q.removedIds||[]).concat(q.entry.key);}persist();}
 function startChallenge(u){closeModal();const p=chalMap(u);const ents=shuffle(Object.values(p).map(r=>r.e));const qs=[];
   for(const e of ents){if(qs.length>=SESSION_N)break;try{qs.push(makeQ(e));}catch(err){delete p[e.key];}}
@@ -2545,14 +2581,15 @@ function startPractice(u){closeModal();if(u!=='mix')return startNext(u);const qs
 /* ---- a stage = a fixed set of questions (ranks from..to of the topic's difficulty order); only a perfect run (all first-try) earns it ---- */
 function startNext(u){const i=nextStage(u);if(i==null)return openStages(u);startStage(u,i);}
 function startStage(u,i,retry){closeModal();if(!stageOpen(u,i)){HUB=u;if(!$('#unit').classList.contains('on')){show('unit');renderStages();}return lockedMsg(u);}
-  const S=STAGES[i];let qs=[];getBank(u).slice(S.from,S.to).forEach(e=>{try{qs.push(makeQ(e));}catch(err){}});
+  const S=STAGES[i];const rec0=US(u);if(!Array.isArray(rec0.va))rec0.va=[];const att=Math.max(0,Math.floor(+rec0.va[i])||0);rec0.va[i]=att+1;
+  let qs=[];getBank(u).slice(S.from,S.to).forEach(e=>{try{qs.push(makeQ(makeVariant(e,att)));}catch(err){try{qs.push(makeQ(e));}catch(e2){}}});
   if(retry)qs=shuffle(qs);
   SAVE.lastU=String(u);persist();
   Q={qt:[],mode:'stage',u,stage:i,title:`${topicTitle(u)} · ${stageName(i)}`,qs,idx:0,res:[],score:0,streak:0,first:true,done:false,retry:!!retry};show('quiz');renderQ();}
 function startMix(){startPractice('mix');}
 function renderProg(){
   if(Q.mode==='exam'){$('#qProg').innerHTML=Q.qs.map((_,k)=>`<span class="${Q.res[k]?'ok':k===Q.idx&&!Q.finished?'cur':''}">${Q.res[k]?checkSvg:''}</span>`).join('');$('#qScore').innerHTML=`📝 <span class="co">${Q.res.filter(Boolean).length}/${Q.qs.length}</span>`;$('#qStreak').innerHTML='';return;}
-  $('#qProg').innerHTML=Q.qs.map((_,k)=>{const r=Q.res[k];return `<span class="${r==='st'?'st':r==='ok'?'ok':k===Q.idx&&!Q.finished?'cur':''}">${r==='st'?starSvg():r==='ok'?checkSvg:''}</span>`;}).join('');
+  $('#qProg').innerHTML=Q.qs.map((_,k)=>{const r=Q.res[k];return `<span class="${r==='x'?'bad':r==='st'?'st':r==='ok'?'ok':k===Q.idx&&!Q.finished?'cur':''}">${r==='st'?starSvg():r==='ok'?checkSvg:r==='x'?'✗':''}</span>`;}).join('');
   $('#qScore').innerHTML=`${starSvg('#fff')} <span class="co">${Q.score}/${Q.qs.length}</span>`;
   $('#qStreak').innerHTML=Q.streak>=2?`🔥 רצף של ${Q.streak}!`:'';
 }
@@ -2568,6 +2605,8 @@ const OOPS=['כמעט! ננסה שוב 🙂','לא נורא, אדם, עוד ני
 let Q=null;
 function answer(ok,given){
   if(Q&&Q.mode==='exam')return examAnswer(ok,given);
+  if(Q&&Q.mode==='stage'&&Q.done)return;
+  if(Q&&Q.mode==='stage'&&!ok)return stageWrong(given);
   const q=Q.qs[Q.idx];const secs=tmRead()/1000;
   try{if(ok){tmStop();Q.qt[Q.idx]=Math.round(secs*10)/10;if(Q.first)markOk(q);else logFixed(secs);}else if(Q.first)logWrong(q,given,secs);else logRetryWrong(given);}catch(e){}
   if(ok){Q.done=true;Q.P.locked=true;Q.res[Q.idx]=Q.first?'st':'ok';
@@ -2586,7 +2625,7 @@ function resultMsg(score,isAng){
   if(score>=85)return['מצוין! איזה יופי! 🌟','כמעט מושלם – אתה ממש שולט בנושא. עוד תרגול קטן וזה 100!'];
   if(score>=60)return['יפה מאוד, אדם! 💪','עבודה טובה! כל פעם אתה משתפר. אפשר לנסות שוב ל-15 שאלות חדשות ולהגיע גבוה יותר.'];
   return['התחלה טובה! 🌱','ככה לומדים – מנסים, טועים ומצליחים. כדאי להציץ ב"הסבר" 📖 ואז לנסות שוב, עם שאלות חדשות.'];}
-function dotsRow(){return `<div class="rdots">${Q.res.map(r=>`<i class="${r==='st'?'st':'ok'}"></i>`).join('')}</div>`;}
+function dotsRow(){return `<div class="rdots">${Q.res.map(r=>`<i class="${r==='st'?'st':r==='x'?'bad':'ok'}"></i>`).join('')}</div>`;}
 function finishRound(){
   if(Q.mode==='exam')return finishExam();
   if(Q.pool)return finishPool();
@@ -2617,7 +2656,7 @@ function finishStage(){
     sub=`${S.kind==='star'?`⭐ כוכבים בנושא: <b>${starsNow} מתוך 10</b>`:`💎 יהלומים בנושא: <b>${diasOf(u)} מתוך 3</b>`}`;
   }else{
     big=c>=n-1?'כמעט! 💪':c>=n/2?'יפה, ממשיכים! 🌱':'התחלה טובה! 🌱';
-    msg=`ענית נכון בניסיון הראשון על <b>${c} מתוך ${n}</b>. כדי להשיג את ${nm} צריך <b>${n} מתוך ${n}</b> – ללא טעויות. אותן שאלות, בסדר אחר. אתה יכול! 💪`;
+    msg=`ענית נכון על <b>${c} מתוך ${n}</b>. כדי להשיג את ${nm} צריך <b>${n} מתוך ${n}</b> – ללא טעויות. בניסיון הבא יהיו שאלות דומות עם מספרים ואותיות חדשים. אתה יכול! 💪`;
     sub=`רמז: אם משהו לא ברור – כדאי להציץ ב"הסבר" 📖 ואז לנסות שוב.`;}
   const btns=[];
   if(perfect){if(nx!=null&&stageOpen(u,nx))btns.push(`<button class="btn green" id="goNext">➡ ${stageName(nx)}</button>`);}
@@ -2641,6 +2680,20 @@ document.addEventListener('keydown',e=>{
 window.__app={get SAVE(){return SAVE;},UNITS,TPL,buildQ,buildVariant,get Q(){return Q;},get LS(){return LS;},unitOpen,lessonDone,mountQ,makePlane,ANGU,makeAngleBoard,diag,canonName,canonArc,equivNames,labelPos,validSpec,nextStep:continueTarget,startPractice,renderQ,openUnit,openLesson,renderStep,startMix,show,finishRound,getBank,drawSession,makeQ,scoreFor,answerQ:answer,STAGES,STAGE_LABELS,stageEntries,sgOf,earned,starsOf,diasOf,stagesOf,isDone,stageOpen,nextStage,bestStage,startStage,startNext,openStages,renderStages,get HUB(){return HUB;},startChallenge,chalCount,openProgress,renderProgress,recordAttempt,get TM(){return TM;},chalMap,chalClean,finishPool,finishStage,totalStars,totalDias,stageTotals,doneCount,recommended,migrateSave,bestOf,lastOf,practicedCount,SESSION_N,BANK_N};
 window.__app.openExams=()=>openExams();window.__app.startExam=id=>startExam(id);window.__app.EXAMS=()=>EXAMS;window.__app.examEntries=id=>examEntries(id);
 
+
+/* v9: in star/diamond stages a wrong answer is final: show it + the correct answer, then move on */
+function stageWrong(given){const q=Q.qs[Q.idx];if(Q.done)return;const secs=tmStop()/1000;Q.done=true;if(Q.P)Q.P.locked=true;Q.qt[Q.idx]=Math.round(secs*10)/10;
+  try{logWrong(q,given,secs);}catch(e){}chalWrong(q);Q.res[Q.idx]='x';Q.streak=0;Q.first=false;
+  const a=$('#qAns');
+  if(q.options)a.querySelectorAll('.opt').forEach((b,k)=>{b.disabled=true;if(q.options[k]&&q.options[k].correct)b.classList.add('right','showright');});
+  a.querySelectorAll('button').forEach(b=>b.disabled=true);const qc=$('#qCheck');if(qc)qc.style.display='none';const mc=$('#mCheck');if(mc)mc.style.display='none';
+  let corr='';try{corr=correctTxt(q,Q.P);}catch(e){}
+  if(!corr&&q.kind==='drag'){try{if(q.after)q.after(Q.P);}catch(e){}corr='';}
+  sfx('bad');say('#qTalk',`לא הפעם 🙂 ${corr?`<br>✅ התשובה הנכונה: <b>${corr}</b>`:`<br>💡 ${q.hint}`}<br><small>ממשיכים לשאלה הבאה – לומדים מטעויות! 💪</small>`,'oops');
+  try{readout($('#qRead'),Q.P,q.read||[]);}catch(e){}
+  const btn=$('#qNext');btn.style.display='';btn.textContent=Q.idx===Q.qs.length-1?'לתוצאה 🏁':'לשאלה הבאה ←';renderProg();
+  try{const t=$('#qTalk');const r=t.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)t.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}}
+window.__app.makeVariant=makeVariant;window.__app.qSig=qSig;
 
 /* ============ v8: exams (25 questions, medium+ difficulty, no hints, review at the end) ============ */
 const EXAM_N=25,EXAM_FROM=40;   /* ranks 41-100 of each topic's ranked bank = top 60% (medium & hard) */
