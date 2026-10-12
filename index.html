@@ -329,6 +329,15 @@ body{font-family:"Rubik","Varela Round","Segoe UI","Arial Hebrew",Arial,sans-ser
 .mfoot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px}.mb{border-radius:12px;padding:4px 10px;font-size:14px;font-weight:800}.mb.ok{background:#d8f8ea;color:#047857}.mb.fx{background:#e7f0ff;color:#1d4ed8}.mb.wait{background:#fff3e0;color:#c2410c}
 .mdiag{max-width:380px;margin-top:8px}.mdiag .plane,.mdiag svg{touch-action:auto;pointer-events:none;width:100%;height:auto}
 .timeline{margin:10px auto;font-size:16px;color:#5b5f77;background:#f4f6fb;border-radius:12px;padding:8px 12px;max-width:520px}.tl-note{font-size:13px;color:#8a91a8}
+/* v8 exams */
+.exgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.extile{display:flex;gap:10px;align-items:center;text-align:right;background:#fff;border:2px solid #e6ebf5;border-radius:18px;padding:12px;font:inherit;cursor:pointer;box-shadow:0 3px 10px #0001}
+.extile.mix{border-color:#c7b3f5}.extile .exnum{min-width:42px;height:42px;border-radius:50%;background:#8338ec;color:#fff;display:grid;place-items:center;font-weight:900;font-size:19px}.extile.topic .exnum{background:#3a86ff}
+.exb{display:flex;flex-direction:column;gap:2px}.exb small{color:#6b7280;font-size:14px}.exbest{font-size:15px;color:#047857}
+.examMode .opt.right,.examMode .opt.wrong{background:#e7f0ff!important;border-color:#3a86ff!important;color:inherit!important}
+.examMode .wrongpt{filter:none!important}
+.rdots i.bad{background:#ff4d6d}
+.exreview{text-align:right;margin:10px 0}
 /* ===== angles side-track ===== */
 .sidetrack{margin:22px 0 8px;padding:14px 12px 16px;border-radius:30px;background:repeating-linear-gradient(45deg,#f3eeff,#f3eeff 14px,#ece5ff 14px,#ece5ff 28px);border:3px dashed #a78bfa}
 .sidehead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0 4px 10px}
@@ -493,6 +502,11 @@ body{font-family:"Rubik","Varela Round","Segoe UI","Arial Hebrew",Arial,sans-ser
 <!-- PROGRESS -->
 <section id="progress" class="screen">
  <div class="home progview" id="progBody"></div>
+</section>
+
+<!-- EXAMS -->
+<section id="exams" class="screen">
+ <div class="home progview" id="examBody"></div>
 </section>
 
 <!-- SUMMARY -->
@@ -2246,14 +2260,18 @@ function mistakeItem(r,idx){const later=isSolvedLater(r),pending=!later&&!!(SAVE
    <div class="mans good">✅ <b>התשובה הנכונה:</b> ${corr||'—'}</div>
    <div class="mfoot">${badge}${badge2}<button class="btn ghost small mshow" data-k="${idx}">👀 הצג את השרטוט</button></div><div class="mdiag" id="md${idx}"></div></div>`;}
 function renderProgress(){const u=PV.u;const all=SAVE.att.slice().sort((a,b)=>a.t-b.t);
-  const tabs=`<div class="ptabs"><button class="ptab ${u==null?'on':''}" data-u="">🌍 הכל</button>${TOPICS.map(x=>`<button class="ptab ${String(x.id)===u?'on':''}" data-u="${x.id}">${numOf(x.id)}</button>`).join('')}</div>`;
+  const tabs=`<div class="ptabs"><button class="ptab ${u==null?'on':''}" data-u="">🌍 הכל</button><button class="ptab ${u==='exam'?'on':''}" data-u="exam">📝 מבחנים</button>${TOPICS.map(x=>`<button class="ptab ${String(x.id)===u?'on':''}" data-u="${x.id}">${numOf(x.id)}</button>`).join('')}</div>`;
   let html='';
-  if(u==null){const T=totalsOf(all);const nm=LOG_KEYS.reduce((s,k)=>s+(SAVE.mlog[k]||[]).length,0);const fixedN=LOG_KEYS.reduce((s,k)=>s+(SAVE.mlog[k]||[]).filter(isSolvedLater).length,0);
+  if(u==='exam'){const A=all.filter(a=>a.m==='exam');const T=totalsOf(A);const L=[];LOG_KEYS.forEach(k=>(SAVE.mlog[k]||[]).forEach(r=>{if(r.ex)L.push(r);}));L.sort((a,b)=>b.t-a.t);PV.list=L;const shown=L.slice(0,PV.shown);
+    html=`<h1>📈 התקדמות במבחנים</h1>${tabs}<div class="pstats"><span class="pill">📝 מבחנים: <b>${A.length}</b></span><span class="pill">🎯 ממוצע: <b>${T.pct==null?'—':T.pct+'/100'}</b></span><span class="pill">⏱️ זמן: <b>${mmss(T.d)}</b></span></div>${chartsBlock(A)}
+     <h3 class="ph3">🏅 השיאים שלי</h3><div class="ptopics">${EXAMS.map(E=>{const r=examRec(E.id);return `<div class="ptopic"><span class="pn">${E.num}</span><span class="pt"><b>${E.title}</b><small>${r.best==null?'עוד לא נבחנתי':`שיא ${r.best}/100 · ${r.n} ניסיונות`}</small></span></div>`;}).join('')}</div>
+     <h3 class="ph3">📝 טעויות במבחנים (${L.length})</h3>${L.length?shown.map((r,i)=>mistakeItem(r,i)).join(''):'<div class="chempty">עוד אין טעויות במבחנים 🎉</div>'}${L.length>shown.length?`<button class="btn ghost" id="pMore">הצג עוד (${L.length-shown.length})</button>`:''}<div class="stgacts"><button class="btn green" id="pExams">📝 למבחנים</button></div>`;}
+  else if(u==null){const T=totalsOf(all);const nm=LOG_KEYS.reduce((s,k)=>s+(SAVE.mlog[k]||[]).length,0);const fixedN=LOG_KEYS.reduce((s,k)=>s+(SAVE.mlog[k]||[]).filter(isSolvedLater).length,0);
     html=`<h1>📈 הטעויות וההתקדמות שלי</h1><p class="psub">כאן רואים איפה טעיתי, מה כבר תיקנתי, ואיך אני משתפר עם הזמן. טעויות הן חלק מהלמידה! 🌱</p>${tabs}
      <div class="pstats"><span class="pill">🎮 ניסיונות: <b>${all.length}</b></span><span class="pill">🎯 נכון בניסיון הראשון: <b>${T.pct==null?'—':T.pct+'%'}</b></span><span class="pill">⏱️ זמן תרגול: <b>${mmss(T.d)}</b></span><span class="pill">📝 טעויות שנשמרו: <b>${nm}</b> (✅ ${fixedN} תוקנו)</span></div>
      ${chartsBlock(all)}<h3 class="ph3">לפי נושא</h3><div class="ptopics">${TOPICS.map(x=>{const k=String(x.id);const A=all.filter(a=>a.u===k);const t=totalsOf(A);const L=SAVE.mlog[k]||[];
        return `<button class="ptopic" data-u="${k}"><span class="pn">${numOf(x.id)}</span><span class="pt"><b>${x.title}</b><small>${A.length?`${A.length} ניסיונות · ${t.pct}% נכון · ${L.length} טעויות`:'עוד לא תרגלתי'}</small></span><span class="pgo">←</span></button>`;}).join('')}</div>`;}
-  else{const A=all.filter(a=>a.u===u);const T=totalsOf(A);const L=(SAVE.mlog[u]||[]).slice().reverse();const shown=L.slice(0,PV.shown);
+  else{const A=all.filter(a=>a.u===u);const T=totalsOf(A);const L=(SAVE.mlog[u]||[]).slice().reverse();PV.list=L;const shown=L.slice(0,PV.shown);
     html=`<h1>📈 נושא ${numOf(parseU(u))}: ${topicTitle(parseU(u))}</h1>${tabs}
      <div class="pstats"><span class="pill">🎮 ניסיונות: <b>${A.length}</b></span><span class="pill">🎯 נכון בניסיון הראשון: <b>${T.pct==null?'—':T.pct+'%'}</b></span><span class="pill">⏱️ זמן: <b>${mmss(T.d)}</b></span></div>
      ${chartsBlock(A)}<h3 class="ph3">📝 הטעויות שלי (${L.length}) – החדשות למעלה</h3>
@@ -2265,10 +2283,12 @@ function renderProgress(){const u=PV.u;const all=SAVE.att.slice().sort((a,b)=>a.
   B.querySelectorAll('.ptab,.ptopic').forEach(b=>b.onclick=()=>{PV={u:b.dataset.u===''?null:b.dataset.u,shown:30};renderProgress();window.scrollTo(0,0);});
   $('#progBack').onclick=()=>show('home');
   const on=(id,f)=>{const e=$('#'+id);if(e)e.onclick=f;};
-  on('pMore',()=>{PV.shown+=30;renderProgress();});on('pPlay',()=>openStages(parseU(u)));on('pChal',()=>startChallenge(parseU(u)));
-  if(u!=null){const L=(SAVE.mlog[u]||[]).slice().reverse();
-    B.querySelectorAll('.mshow').forEach(b=>b.onclick=()=>{const i=+b.dataset.k,box=$('#md'+i);if(box.dataset.on){box.innerHTML='';delete box.dataset.on;b.textContent='👀 הצג את השרטוט';return;}
-      try{const q=makeQ(L[i].e);const P=q.angle?makeAngleBoard(box,q.angle):makePlane(box,q.board);q.setup&&q.setup(P);P.refresh&&P.refresh();P.locked=true;box.dataset.on='1';b.textContent='🙈 הסתר';}catch(e){box.textContent='אי אפשר להציג את השרטוט';}});}
+  on('pExams',()=>openExams());on('pMore',()=>{PV.shown+=30;renderProgress();});on('pPlay',()=>openStages(parseU(u)));on('pChal',()=>startChallenge(parseU(u)));
+  if(u!=null){const L=PV.list||[];bindDiag(B,i=>L[+i]);}
+}
+function bindDiag(B,get){
+  {B.querySelectorAll('.mshow').forEach(b=>b.onclick=()=>{const i=b.dataset.k,box=$('#md'+i);if(box.dataset.on){box.innerHTML='';delete box.dataset.on;b.textContent='👀 הצג את השרטוט';return;}
+      try{const q=makeQ(get(i).e);const P=q.angle?makeAngleBoard(box,q.angle):makePlane(box,q.board);q.setup&&q.setup(P);P.refresh&&P.refresh();P.locked=true;box.dataset.on='1';b.textContent='🙈 הסתר';}catch(e){box.textContent='אי אפשר להציג את השרטוט';}});}
 }
 
 /* ============ navigation ============ */
@@ -2285,7 +2305,7 @@ function confetti(dur=3800,count=200){
       else ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);ctx.restore();});
     if(my!==CONF_ID)return;if(t-t0<dur)requestAnimationFrame(f);else{ctx.clearRect(0,0,c.width,c.height);c.style.display='none';}})(t0);
 }
-function show(id){stopConfetti();document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));window.scrollTo(0,0);if(id==='home')renderHome();}
+function show(id){stopConfetti();if(id!=='quiz'){const qz=document.querySelector('#quiz');if(qz)qz.classList.remove('examMode');}document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));window.scrollTo(0,0);if(id==='home')renderHome();}
 function modal(html){$('#modalBox').innerHTML=html;$('#modal').classList.add('on');}
 function closeModal(){$('#modal').classList.remove('on');}
 $('#modal').addEventListener('pointerdown',e=>{if(e.target.id==='modal')closeModal();});
@@ -2356,7 +2376,7 @@ function migrateSave(){
     SAVE.ver=5;
   }catch(e){SAVE.ver=5;SAVE.seen=SAVE.seen||{};}
 }
-migrateSave();progClean();SAVE.ver=6;
+migrateSave();progClean();SAVE.ver=7;
 const st3=n=>[0,1,2].map(i=>starSvg(i<n?'#ffbe0b':'#e6ebf5')).join('');
 function continueTarget(){const r=recommended();if(r==null)return{kind:'mix'};if(!lessonDone(r)&&!triedAny(r))return{kind:'lesson',u:r};return{kind:'stage',u:r,i:nextStage(r)};}
 function go(t){if(!t||t.kind==='mix')return startPractice('mix');if(t.kind==='lesson')openLesson(t.u,true);else startStage(t.u,t.i);}
@@ -2411,9 +2431,10 @@ function renderHome(){
   bindCards($('#units'));
   const mb=bestOf('mix');
   $('#extras').innerHTML=`<button class="mission big" id="goQuiz"><span class="ic">${ICONS.trophy}</span><span><h3>האתגר הגדול – 15 שאלות</h3><p>שאלות מעורבות מכל הנושאים. כל תשובה נכונה בניסיון הראשון מקדמת את הציון (מתוך 100). ${mb==null?'':`השיא שלך: <b class="co">${mb}/100</b>`}</p></span></button>
+    <button class="mission big" id="goExams"><span class="ic" style="font-size:54px;display:grid;place-items:center">📝</span><span><h3>מבחנים</h3><p>${EXAMS.length} מבחנים של 25 שאלות ברמה בינונית-קשה, בלי רמזים, עם ציון מתוך 100. ${(()=>{const b=EXAMS.map(e=>examRec(e.id).best).filter(x=>x!=null);return b.length?`נבחנת ב-<b>${b.length}</b> מבחנים · השיא: <b class="co">${Math.max(...b)}/100</b>`:'';})()}</p></span></button>
     <button class="mission" id="goProg"><span class="ic" style="font-size:54px;display:grid;place-items:center">📈</span><span><h3>הטעויות וההתקדמות שלי</h3><p>איפה טעיתי, מה כבר תיקנתי, וגרפים של שיפור בדיוק ובמהירות.</p></span></button>
     <button class="mission" id="goLab"><span class="ic">${ICONS.lab}</span><span><h3>מגרש החקירות</h3><p>גרור נקודות בחופשיות וגלה בעצמך!</p></span></button>`;
-  $('#goLab').onclick=openSandbox;$('#goProg').onclick=()=>openProgress(null);$('#goQuiz').onclick=()=>startPractice('mix');
+  $('#goLab').onclick=openSandbox;$('#goExams').onclick=()=>openExams();$('#goProg').onclick=()=>openProgress(null);$('#goQuiz').onclick=()=>startPractice('mix');
 }
 /* ============ STAGE PICKER (one per topic): all 13 stages with difficulty label and state ============ */
 let HUB=null;
@@ -2530,6 +2551,7 @@ function startStage(u,i,retry){closeModal();if(!stageOpen(u,i)){HUB=u;if(!$('#un
   Q={qt:[],mode:'stage',u,stage:i,title:`${topicTitle(u)} · ${stageName(i)}`,qs,idx:0,res:[],score:0,streak:0,first:true,done:false,retry:!!retry};show('quiz');renderQ();}
 function startMix(){startPractice('mix');}
 function renderProg(){
+  if(Q.mode==='exam'){$('#qProg').innerHTML=Q.qs.map((_,k)=>`<span class="${Q.res[k]?'ok':k===Q.idx&&!Q.finished?'cur':''}">${Q.res[k]?checkSvg:''}</span>`).join('');$('#qScore').innerHTML=`📝 <span class="co">${Q.res.filter(Boolean).length}/${Q.qs.length}</span>`;$('#qStreak').innerHTML='';return;}
   $('#qProg').innerHTML=Q.qs.map((_,k)=>{const r=Q.res[k];return `<span class="${r==='st'?'st':r==='ok'?'ok':k===Q.idx&&!Q.finished?'cur':''}">${r==='st'?starSvg():r==='ok'?checkSvg:''}</span>`;}).join('');
   $('#qScore').innerHTML=`${starSvg('#fff')} <span class="co">${Q.score}/${Q.qs.length}</span>`;
   $('#qStreak').innerHTML=Q.streak>=2?`🔥 רצף של ${Q.streak}!`:'';
@@ -2545,6 +2567,7 @@ const RETRY_PRAISE=['יופי, תיקנת! ככה בדיוק לומדים 💪',
 const OOPS=['כמעט! ננסה שוב 🙂','לא נורא, אדם, עוד ניסיון!','אופס, קרוב! נסה שוב'];
 let Q=null;
 function answer(ok,given){
+  if(Q&&Q.mode==='exam')return examAnswer(ok,given);
   const q=Q.qs[Q.idx];const secs=tmRead()/1000;
   try{if(ok){tmStop();Q.qt[Q.idx]=Math.round(secs*10)/10;if(Q.first)markOk(q);else logFixed(secs);}else if(Q.first)logWrong(q,given,secs);else logRetryWrong(given);}catch(e){}
   if(ok){Q.done=true;Q.P.locked=true;Q.res[Q.idx]=Q.first?'st':'ok';
@@ -2565,6 +2588,7 @@ function resultMsg(score,isAng){
   return['התחלה טובה! 🌱','ככה לומדים – מנסים, טועים ומצליחים. כדאי להציץ ב"הסבר" 📖 ואז לנסות שוב, עם שאלות חדשות.'];}
 function dotsRow(){return `<div class="rdots">${Q.res.map(r=>`<i class="${r==='st'?'st':'ok'}"></i>`).join('')}</div>`;}
 function finishRound(){
+  if(Q.mode==='exam')return finishExam();
   if(Q.pool)return finishPool();
   if(Q.mode==='stage')return finishStage();
   /* the big challenge: 15 mixed questions, score out of 100 (no stages) */
@@ -2615,7 +2639,59 @@ document.addEventListener('keydown',e=>{
   else if($('#lesson').classList.contains('on')){const a=$('#lAns');if(a._key&&!LS.done){a._key(e.key);return;}if(e.key==='Enter'&&!$('#modal').classList.contains('on')&&LS.done)$('#lNext').click();}
 });
 window.__app={get SAVE(){return SAVE;},UNITS,TPL,buildQ,buildVariant,get Q(){return Q;},get LS(){return LS;},unitOpen,lessonDone,mountQ,makePlane,ANGU,makeAngleBoard,diag,canonName,canonArc,equivNames,labelPos,validSpec,nextStep:continueTarget,startPractice,renderQ,openUnit,openLesson,renderStep,startMix,show,finishRound,getBank,drawSession,makeQ,scoreFor,answerQ:answer,STAGES,STAGE_LABELS,stageEntries,sgOf,earned,starsOf,diasOf,stagesOf,isDone,stageOpen,nextStage,bestStage,startStage,startNext,openStages,renderStages,get HUB(){return HUB;},startChallenge,chalCount,openProgress,renderProgress,recordAttempt,get TM(){return TM;},chalMap,chalClean,finishPool,finishStage,totalStars,totalDias,stageTotals,doneCount,recommended,migrateSave,bestOf,lastOf,practicedCount,SESSION_N,BANK_N};
-persist();renderHome();
+window.__app.openExams=()=>openExams();window.__app.startExam=id=>startExam(id);window.__app.EXAMS=()=>EXAMS;window.__app.examEntries=id=>examEntries(id);
+
+
+/* ============ v8: exams (25 questions, medium+ difficulty, no hints, review at the end) ============ */
+const EXAM_N=25,EXAM_FROM=40;   /* ranks 41-100 of each topic's ranked bank = top 60% (medium & hard) */
+const EXAM_TOPICS=[1,2,3,4,5,6,7,8,'ang'];
+const EXAMS=[1,2,3,4,5].map(k=>({id:'m'+k,num:k,kind:'mix',title:`מבחן מסכם ${k}`,sub:'כל הנושאים לפי סדר הספר'}))
+  .concat(TOPICS_LIST().map((x,i)=>({id:'t'+x.id,num:6+i,kind:'topic',u:x.id,title:`מבחן ${6+i}: ${x.id==='ang'?'זוויות':x.title}`,sub:`נושא ${x.id==='ang'?10:x.id} בלבד`})));
+function TOPICS_LIST(){return UNITS.concat([ANGU]);}
+EXAMS.forEach(E=>{if(E.kind==='mix')E.title=`מבחן ${E.num}: מסכם – כל הנושאים`;});
+const seededShuffle=(arr,seed)=>withSeed(hashStr(seed),()=>shuffle(arr));
+const EXAM_CACHE={};
+function examEntries(id){if(EXAM_CACHE[id])return EXAM_CACHE[id];const E=EXAMS.find(e=>e.id===id);let out=[];
+  if(E.kind==='topic'){out=seededShuffle(getBank(E.u).slice(EXAM_FROM),'exam:'+id).slice(0,EXAM_N).sort((a,b)=>a.rank-b.rank);}
+  else{const k=E.num-1;/* 9 topics: 7 get 3 questions, 2 get 2 (rotating) -> 25; each mixed exam takes a different slice of the shuffled pool */
+    EXAM_TOPICS.forEach((u,ti)=>{const cnt=((ti+k*2)%9)<7?3:2;const pool=seededShuffle(getBank(u).slice(EXAM_FROM),'exammix:'+u);
+      const part=pool.slice(k*3,k*3+cnt).sort((a,b)=>a.rank-b.rank);out=out.concat(part);});}
+  return EXAM_CACHE[id]=out;}
+function examRec(id){if(!SAVE.exams||typeof SAVE.exams!=='object'||Array.isArray(SAVE.exams))SAVE.exams={};let r=SAVE.exams[id];if(!r||typeof r!=='object')r=SAVE.exams[id]={best:null,n:0,last:null};if(!Number.isFinite(+r.n))r.n=0;if(r.best!=null&&!Number.isFinite(+r.best))r.best=null;return r;}
+function examsClean(){try{if(!SAVE.exams||typeof SAVE.exams!=='object'||Array.isArray(SAVE.exams))SAVE.exams={};Object.keys(SAVE.exams).forEach(k=>{if(!EXAMS.some(e=>e.id===k))delete SAVE.exams[k];else examRec(k);});}catch(e){SAVE.exams={};}}
+function openExams(){closeModal();show('exams');renderExams();}
+function renderExams(){const tile=E=>{const r=examRec(E.id);return `<button class="extile ${E.kind}" data-ex="${E.id}"><span class="exnum">${E.num}</span><span class="exb"><b>${E.title}</b><small>${E.sub} · ${EXAM_N} שאלות</small><span class="exbest">${r.best==null?'עוד לא נבחנתי':`🏅 השיא שלי: <b>${r.best}/100</b> · ${r.n} ניסיונות`}</span></span></button>`;};
+  $('#examBody').innerHTML=`<h1>📝 מבחנים</h1><p class="psub">כל מבחן: <b>${EXAM_N} שאלות</b> ברמה בינונית וקשה. <b>בלי רמזים</b> ובלי לדעת מיד אם צדקת – כמו מבחן אמיתי בכיתה! בסוף מקבלים ציון מתוך 100 ורואים בדיוק איפה טעית. בהצלחה, אדם! 🍀</p>
+   <h3 class="ph3">🌍 מבחנים מסכמים</h3><div class="exgrid">${EXAMS.filter(e=>e.kind==='mix').map(tile).join('')}</div>
+   <h3 class="ph3">📚 מבחן לכל נושא</h3><div class="exgrid">${EXAMS.filter(e=>e.kind==='topic').map(tile).join('')}</div>
+   <div class="navrow" style="margin-top:18px"><button class="btn ghost" id="exProg">📈 התקדמות במבחנים</button><button class="btn ghost" id="exBack">→ למסלול</button></div>`;
+  $('#examBody').querySelectorAll('.extile').forEach(b=>b.onclick=()=>startExam(b.dataset.ex));
+  $('#exBack').onclick=()=>show('home');$('#exProg').onclick=()=>openProgress('exam');}
+function startExam(id){closeModal();const E=EXAMS.find(e=>e.id===id);if(!E)return;const qs=[];examEntries(id).forEach(e=>{try{qs.push(makeQ(e));}catch(err){}});
+  Q={qt:[],mode:'exam',exam:E,u:'exam',title:`📝 ${E.title}`,qs,idx:0,res:[],score:0,streak:0,first:true,done:false,elog:[]};
+  document.querySelector('#quiz').classList.add('examMode');show('quiz');renderQ();}
+/* one answer per question; neutral feedback; record it and move on */
+function examAnswer(ok,given){const q=Q.qs[Q.idx];if(Q.done)return;const secs=tmStop()/1000;Q.done=true;if(Q.P)Q.P.locked=true;Q.qt[Q.idx]=Math.round(secs*10)/10;
+  Q.res[Q.idx]=ok?'st':'x';if(ok){Q.score++;markOk(q);}
+  else{try{const pk=String(q.entry.u);const r={t:Date.now(),e:{u:q.entry.u,lvl:q.entry.lvl,tpl:q.entry.tpl,args:q.entry.args,key:q.entry.key},st:`📝 מבחן ${Q.exam.num}`,g:[givenTxt(q,given)],c:correctTxt(q,Q.P),s:Math.round(secs),pr:clip(String(q.prompt||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' '),200),fx:false,ex:Q.exam.id};
+    Q.elog.push(r);if(LOG_KEYS.includes(pk)){const L=mlogOf(pk);L.push(r);if(L.length>LOG_CAP)L.splice(0,L.length-LOG_CAP);}persistSafe();}catch(e){}}
+  sfx('tick');say('#qTalk','✍️ התשובה נשמרה. ממשיכים!',null);try{readout($('#qRead'),Q.P,q.read||[]);}catch(e){}renderProg();
+  const btn=$('#qNext');btn.style.display='';btn.textContent=Q.idx===Q.qs.length-1?'סיום המבחן 🏁':'לשאלה הבאה ←';const qc=$('#qCheck');if(qc)qc.style.display='none';
+  $('#qAns').querySelectorAll('button').forEach(b=>b.disabled=true);}
+function finishExam(){Q.finished=true;document.querySelector('#quiz').classList.remove('examMode');const E=Q.exam,n=Q.qs.length,c=Q.score,score=scoreFor(c,n);
+  const AT=recordAttempt();AT.m='exam';AT.ex=E.id;AT.u='exam';const r=examRec(E.id);const prev=r.best;r.n++;r.last=score;if(prev==null||score>prev)r.best=score;persistSafe();show('summary');
+  const msg=score===100?'100! מושלם! 🏆 אתה אלוף!':score>=85?'מצוין! 🌟':score>=70?'יפה מאוד! 💪':score>=55?'עבר! ממשיכים להשתפר 🌱':'התחלה – עכשיו לומדים מהטעויות 🌱';
+  const L=Q.elog;
+  $('#sumCard').innerHTML=`<div class="qnum" style="font-size:18px">${Q.title}</div><div class="sumscore" id="sumScore">${score}<small>/100</small></div>
+   <div class="rdots">${Q.res.map(x=>`<i class="${x==='st'?'st':'bad'}"></i>`).join('')}</div>
+   <div class="summsg">${msg}</div><div class="sumsub">נכון: <b>${c} מתוך ${n}</b>${prev!=null?` · השיא הקודם: <b>${prev}/100</b>${score>prev?' – 🎉 שיא חדש!':''}`:''}</div>${timeLine(AT)}
+   <div class="exreview"><h3 class="ph3">${L.length?`🔍 בדיקת המבחן – ${L.length} טעויות`:'🎉 אין טעויות בכלל!'}</h3>${L.map((r,i)=>mistakeItem(r,'x'+i)).join('')}</div>
+   <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><button class="btn orange" id="exAgain">🔄 עוד פעם את המבחן</button><button class="btn" id="exList">📝 לכל המבחנים</button><button class="btn ghost" id="toMap">🗺️ למסלול</button></div>`;
+  bindDiag($('#sumCard'),i=>L[+String(i).slice(1)]);
+  $('#exAgain').onclick=()=>startExam(E.id);$('#exList').onclick=openExams;$('#toMap').onclick=()=>show('home');
+  if(score>=85){sfx('win');confetti(3500,200);}else sfx('good');}
+
+examsClean();persist();renderHome();
 
 </script>
 </body>
