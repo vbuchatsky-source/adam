@@ -310,6 +310,25 @@ button{font-family:inherit;cursor:pointer}
 /* hide the free host's injected promo badge (Chinese "deploy with Pages") and keep our font */
 .button-container,.edgeone-button{display:none!important}
 body{font-family:"Rubik","Varela Round","Segoe UI","Arial Hebrew",Arial,sans-serif!important}
+/* v7 progress screen */
+.progview h1{font-size:28px;margin:6px 0}.psub{font-size:18px;color:#5b5f77;margin:0 0 10px}
+.ptabs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.ptab{border:2px solid #d9def0;background:#fff;border-radius:14px;min-width:44px;height:44px;font:inherit;font-weight:800;font-size:17px;cursor:pointer;padding:0 10px}.ptab.on{background:#8338ec;color:#fff;border-color:#8338ec}
+.pstats{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.trend{background:#effff9;border:2px solid #b8f0dc;border-radius:16px;padding:12px 14px;font-size:18px;line-height:1.6;margin:10px 0}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.chbox{background:#fff;border-radius:16px;padding:10px;box-shadow:0 3px 10px #0001}.chbox h4{margin:2px 4px 6px;font-size:16px}.chbox small{color:#8a91a8}
+.chart{width:100%;height:auto;display:block;direction:ltr}.chempty{color:#8a91a8;padding:18px;text-align:center;font-size:17px}
+.ph3{margin:18px 0 8px;font-size:21px}
+.ptopics{display:grid;gap:8px}.ptopic{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid #e6ebf5;border-radius:16px;padding:10px;font:inherit;text-align:right;cursor:pointer}
+.ptopic .pn{width:36px;height:36px;border-radius:50%;background:#3a86ff;color:#fff;display:grid;place-items:center;font-weight:900}.ptopic .pt{flex:1;display:flex;flex-direction:column}.ptopic small{color:#6b7280;font-size:15px}.pgo{font-size:22px;color:#8338ec}
+.mitem{background:#fff;border-radius:16px;padding:12px;margin:10px 0;box-shadow:0 3px 10px #0001;border-right:6px solid #ff4d6d}
+.mhead{display:flex;flex-wrap:wrap;gap:10px;font-size:14px;color:#6b7280;margin-bottom:6px}.mst{font-weight:800;color:#5b5f97}
+.mprompt{font-size:18px;line-height:1.5;margin-bottom:8px}
+.mans{border-radius:12px;padding:8px 10px;margin:4px 0;font-size:17px;line-height:1.5}.mans.bad{background:#fff0f3}.mans.good{background:#effff9}.mmore{font-size:14px;color:#6b7280;margin-top:4px}
+.mans svg{max-width:120px;height:auto;vertical-align:middle}
+.mfoot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px}.mb{border-radius:12px;padding:4px 10px;font-size:14px;font-weight:800}.mb.ok{background:#d8f8ea;color:#047857}.mb.fx{background:#e7f0ff;color:#1d4ed8}.mb.wait{background:#fff3e0;color:#c2410c}
+.mdiag{max-width:380px;margin-top:8px}.mdiag .plane,.mdiag svg{touch-action:auto;pointer-events:none;width:100%;height:auto}
+.timeline{margin:10px auto;font-size:16px;color:#5b5f77;background:#f4f6fb;border-radius:12px;padding:8px 12px;max-width:520px}.tl-note{font-size:13px;color:#8a91a8}
 /* ===== angles side-track ===== */
 .sidetrack{margin:22px 0 8px;padding:14px 12px 16px;border-radius:30px;background:repeating-linear-gradient(45deg,#f3eeff,#f3eeff 14px,#ece5ff 14px,#ece5ff 28px);border:3px dashed #a78bfa}
 .sidehead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0 4px 10px}
@@ -469,6 +488,11 @@ body{font-family:"Rubik","Varela Round","Segoe UI","Arial Hebrew",Arial,sans-ser
   </div>
   <div class="planeWrap" id="qPlane"></div>
  </div>
+</section>
+
+<!-- PROGRESS -->
+<section id="progress" class="screen">
+ <div class="home progview" id="progBody"></div>
 </section>
 
 <!-- SUMMARY -->
@@ -758,27 +782,27 @@ function mountQ(q,env){
   const ctl={P,q,a};
   if(q.kind==='mc'){
     a.innerHTML=`<div class="opts${q.tf?' tfopts':''}" style="${q.cols1?'grid-template-columns:1fr':''}">${q.options.map((o,k)=>`<button class="opt" data-k="${k}">${o.html}</button>`).join('')}</div>`;
-    a.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{if(env.isDone())return;const ok=q.options[+b.dataset.k].correct;b.classList.add(ok?'right':'wrong');if(ok)a.querySelectorAll('.opt').forEach(x=>x.disabled=true);env.result(ok);});
+    a.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{if(env.isDone())return;const ok=q.options[+b.dataset.k].correct;b.classList.add(ok?'right':'wrong');if(ok)a.querySelectorAll('.opt').forEach(x=>x.disabled=true);env.result(ok,{t:'mc',h:q.options[+b.dataset.k].html});});
     if(env.quiz)say2(q.tf?'קרא את המשפט והחלט: נכון או לא נכון? 🤔':'בחר את התשובה הנכונה 👆',null);
   }else if(q.kind==='multi'){
     a.innerHTML=`<div class="opts" style="${q.cols1?'grid-template-columns:1fr':''}">${q.options.map((o,k)=>`<button class="opt" data-k="${k}" aria-pressed="false">${o.html}</button>`).join('')}</div><button class="btn green" id="mCheck" style="width:100%;font-size:22px;margin-top:10px">בדוק ✓</button>`;
     const bs=[...a.querySelectorAll('.opt')];
     bs.forEach(b=>b.onclick=()=>{if(env.isDone())return;b.classList.toggle('sel');b.setAttribute('aria-pressed',b.classList.contains('sel'));sfx('tick');});
-    a.querySelector('#mCheck').onclick=()=>{if(env.isDone())return;const sel=bs.map(b=>b.classList.contains('sel'));const ok=q.options.every((o,i)=>o.correct===sel[i]);
+    a.querySelector('#mCheck').onclick=()=>{if(env.isDone())return;const sel=bs.map(b=>b.classList.contains('sel'));const ok=q.options.every((o,i)=>o.correct===sel[i]);const gv={t:'multi',h:q.options.filter((o,i)=>sel[i]).map(o=>o.html)};
       if(ok){bs.forEach((b,i)=>{b.disabled=true;if(q.options[i].correct)b.classList.add('right');});a.querySelector('#mCheck').style.display='none';}
       else{bs.forEach(b=>{b.classList.remove('sel');b.setAttribute('aria-pressed','false');});}
-      env.result(ok);};
+      env.result(ok,gv);};
     if(env.quiz)say2('סמן <b>את כל</b> התשובות הנכונות (יש יותר מאחת) ואז לחץ <b>בדוק</b> 👆',null);
   }else if(q.kind==='drag'){
     if(env.auto){P.onDrop=()=>{upd();if(!env.isDone()&&q.check(P))env.result(true);};}
     else{a.innerHTML=`<button class="btn green" id="qCheck" style="width:100%;font-size:22px">בדוק ✓</button>`;
-      $('#qCheck').onclick=()=>{if(env.isDone())return;const ok=q.check(P);if(!ok)Object.keys(P.pts).filter(id=>P.pts[id].o.drag).forEach(id=>P.mark(id,'wrongpt'));env.result(ok);};}
+      $('#qCheck').onclick=()=>{if(env.isDone())return;const ok=q.check(P);const gv={t:'drag',p:Object.keys(P.pts).filter(id=>P.pts[id].o.drag).map(id=>[id,P.pts[id].x,P.pts[id].y])};if(!ok)Object.keys(P.pts).filter(id=>P.pts[id].o.drag).forEach(id=>P.mark(id,'wrongpt'));env.result(ok,gv);};}
     if(env.quiz)say2(Object.values(P.pts).filter(p=>p.o.drag).length>1?'גרור את <b>הנקודות</b> בשרטוט, ואז לחץ <b>בדוק</b> 👈':'גרור את הנקודה בשרטוט (או הקש על משבצת), ואז לחץ <b>בדוק</b> 👈',null);
   }else if(q.kind==='tap'){
-    P.onTap=id=>{if(env.isDone())return;const ok=q.tapCheck(id);if(!ok)P.mark(id,'wrongpt');env.result(ok);};P.refresh();
+    P.onTap=id=>{if(env.isDone())return;const ok=q.tapCheck(id);if(!ok)P.mark(id,'wrongpt');env.result(ok,{t:'tap',id});};P.refresh();
     if(env.quiz)say2(q.angle?(q.angle.tapMode==='pt'?'הקש על האות הנכונה בשרטוט 👈':'הקש על הקשת הצבעונית הנכונה בשרטוט 👈'):'הקש על אחת הנקודות הכחולות בשרטוט 👈',null);
   }else if(q.kind==='num'){
-    keypad(a,v=>{if(env.isDone())return true;const ok=q.accept?q.accept(v):(Array.isArray(q.answer)?q.answer.every((x,i)=>x===v[i]):v===q.answer);env.result(ok);return ok;},{neg:q.neg,n:q.nf||1,fl:q.fl,rl:q.rl});
+    keypad(a,v=>{if(env.isDone())return true;const ok=q.accept?q.accept(v):(Array.isArray(q.answer)?q.answer.every((x,i)=>x===v[i]):v===q.answer);env.result(ok,{t:'num',v});return ok;},{neg:q.neg,n:q.nf||1,fl:q.fl,rl:q.rl});
     if(env.quiz)say2(NUMTXT+(q.neg?' (למספר שלילי לחץ ±)':''),null);
   }
   return ctl;
@@ -2125,6 +2149,128 @@ function drawSession(u){
   /* (a builder failing would be a bug; fuzz tests make sure it never happens) */
   return qs;}
 
+/* ============ v7: timing, mistake log, attempt history, progress screen ============ */
+const LOG_CAP=500,ATT_CAP=3000,LOG_KEYS=['1','2','3','4','5','6','7','8','9','ang'];
+/* ---- question timer: counts only while the tab is visible ---- */
+const TM={acc:0,since:null,run:false};
+const tNow=()=>performance.now();
+function tmStart(){TM.acc=0;TM.run=true;TM.since=document.hidden?null:tNow();}
+function tmRead(){return TM.acc+(TM.run&&TM.since!=null?tNow()-TM.since:0);}
+function tmStop(){TM.acc=tmRead();TM.run=false;TM.since=null;return TM.acc;}
+document.addEventListener('visibilitychange',()=>{if(!TM.run)return;if(document.hidden){if(TM.since!=null){TM.acc+=tNow()-TM.since;TM.since=null;}}else if(TM.since==null)TM.since=tNow();});
+/* ---- storage (lazily created; old saves simply have none) ---- */
+function progClean(){try{
+  if(!SAVE.mlog||typeof SAVE.mlog!=='object'||Array.isArray(SAVE.mlog))SAVE.mlog={};
+  Object.keys(SAVE.mlog).forEach(u=>{if(!LOG_KEYS.includes(u)||!Array.isArray(SAVE.mlog[u])){delete SAVE.mlog[u];return;}
+    SAVE.mlog[u]=SAVE.mlog[u].filter(r=>r&&typeof r==='object'&&Number.isFinite(+r.t)&&r.e&&typeof r.e.key==='string');});
+  if(!Array.isArray(SAVE.att))SAVE.att=[];SAVE.att=SAVE.att.filter(a=>a&&Number.isFinite(+a.t)&&Number.isFinite(+a.c)&&+a.n>0);
+  if(!SAVE.qok||typeof SAVE.qok!=='object'||Array.isArray(SAVE.qok))SAVE.qok={};
+  if(!(SAVE.ver>=6))SAVE.ver=6;
+}catch(e){SAVE.mlog={};SAVE.att=[];SAVE.qok={};SAVE.ver=6;}}
+progClean();
+const mlogOf=u=>{const k=String(u);if(!SAVE.mlog[k])SAVE.mlog[k]=[];return SAVE.mlog[k];};
+/* if storage is full, drop the oldest log entries / attempts and try again (never touches stars) */
+function trimForSpace(){let all=[];LOG_KEYS.forEach(k=>(SAVE.mlog[k]||[]).forEach(r=>all.push([r.t,k,r])));all.sort((a,b)=>a[0]-b[0]);
+  const drop=new Set(all.slice(0,Math.max(20,Math.ceil(all.length*.15))).map(x=>x[2]));LOG_KEYS.forEach(k=>{if(SAVE.mlog[k])SAVE.mlog[k]=SAVE.mlog[k].filter(r=>!drop.has(r));});
+  if(SAVE.att.length>200)SAVE.att=SAVE.att.slice(Math.floor(SAVE.att.length*.15));}
+function persistSafe(){for(let i=0;i<6;i++){try{localStorage.setItem(KEY,JSON.stringify(SAVE));break;}catch(e){trimForSpace();}}persist();}
+const clip=(h,n)=>{h=String(h==null?'':h);return h.length<=(n||1800)?h:h.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').slice(0,300);};
+/* ---- describe answers ---- */
+function tapName(q,id){if(q.angle){const ar=(q.angle.arcs||[]).find(a=>a.id===id);if(ar)return angN([ar.a,ar.v,ar.b]);return `<b>${id}</b>`;}return `הנקודה <b>${id}</b>`;}
+function numTxt(q,v){if(!Array.isArray(v))return `<b class="co">${fmt(v)}</b>`;if(q.fl)return v.map((x,i)=>`${q.fl[i]} = <b class="co">${fmt(x)}</b>`).join(' · ');
+  if(v.length%2===0){const o=[];for(let i=0;i<v.length;i+=2)o.push((q.rl?`<b>${q.rl[i/2]}</b>`:'')+co(v[i],v[i+1]));return o.join(' · ');}return v.map(x=>`<b class="co">${fmt(x)}</b>`).join(', ');}
+function givenTxt(q,g){if(!g)return'';try{
+  if(g.t==='mc')return clip(g.h);if(g.t==='multi')return g.h.length?g.h.map(h=>clip(h,600)).join(' · '):'(לא סומן כלום)';
+  if(g.t==='num')return numTxt(q,g.v);if(g.t==='tap')return tapName(q,g.id);
+  if(g.t==='drag')return g.p.map(([id,x,y])=>`<b>${id}</b>${co(x,y)}`).join(' · ');}catch(e){}return'';}
+function correctTxt(q,P){try{
+  if(q.kind==='mc')return q.options.filter(o=>o.correct).map(o=>clip(o.html,600)).join(' · ');
+  if(q.kind==='multi')return q.options.filter(o=>o.correct).map(o=>clip(o.html,600)).join(' · ');
+  if(q.kind==='num'&&q.answer!=null)return numTxt(q,q.answer);
+  if(q.kind==='tap'&&P){const ids=q.angle?(q.angle.arcs||[]).map(a=>a.id).concat(Object.keys(P.pts||{})):Object.keys(P.pts||{});const ok=[...new Set(ids)].filter(id=>{try{return q.tapCheck(id);}catch(e){return false;}});if(ok.length)return ok.map(id=>tapName(q,id)).join(' או ');}
+}catch(e){}return '';}
+const placeLabel=()=>!Q?'':Q.pool?'🔥 היה מאתגר':Q.mode==='stage'?stageName(Q.stage):'🏆 האתגר הגדול';
+/* ---- hooks called from the quiz ---- */
+function logWrong(q,given,secs){if(!q||!q.entry)return;const pk=Q.u==='mix'?String(q.entry.u):String(Q.u);if(!LOG_KEYS.includes(pk))return;const e=q.entry;
+  const r={t:Date.now(),e:{u:e.u,lvl:e.lvl,tpl:e.tpl,args:e.args,key:e.key},st:placeLabel(),g:[givenTxt(q,given)],c:correctTxt(q,Q.P),s:Math.round(secs),pr:clip(String(q.prompt||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' '),200),fx:false};
+  const L=mlogOf(pk);L.push(r);if(L.length>LOG_CAP)L.splice(0,L.length-LOG_CAP);Q.curLog=r;persistSafe();}
+function logRetryWrong(given){const r=Q&&Q.curLog;if(r&&r.g.length<4){r.g.push(givenTxt(Q.qs[Q.idx],given));persistSafe();}}
+function logFixed(secs){const r=Q&&Q.curLog;if(r){r.fx=true;r.s2=Math.round(secs);persistSafe();}}
+function markOk(q){if(q&&q.entry){SAVE.qok[q.entry.key]=Date.now();}}
+function recordAttempt(){if(!Q||Q.recorded)return null;Q.recorded=true;const qt=Q.qt||[];const fs=Q.res.map((r,i)=>r==='st'?(qt[i]||0):0);
+  const a={t:Date.now(),u:String(Q.u),m:Q.pool?'pool':Q.mode==='stage'?'stage':'mix',i:Q.mode==='stage'?Q.stage:null,c:Q.score,n:Q.qs.length,d:Math.round(qt.reduce((x,y)=>x+(y||0),0)),cs:Math.round(fs.reduce((x,y)=>x+y,0)*10)/10};
+  SAVE.att.push(a);if(SAVE.att.length>ATT_CAP)SAVE.att.splice(0,SAVE.att.length-ATT_CAP);persistSafe();return a;}
+const mmss=s=>{s=Math.max(0,Math.round(s));const m=Math.floor(s/60),x=s%60;return m?`${m}:${String(x).padStart(2,'0')} דק׳`:`${x} שניות`;};
+function timeLine(a){if(!a)return'';const avg=a.n?a.d/a.n:0;return `<div class="timeline">⏱️ זמן השלב: <b>${mmss(a.d)}</b> · בממוצע <b>${Math.round(avg)}</b> שניות לשאלה <span class="tl-note">(בלי לחץ – זה רק כדי לראות שיפור 🙂)</span></div>`;}
+/* ---- statistics ---- */
+const pad2=n=>String(n).padStart(2,'0');
+const dayKey=t=>{const d=new Date(t);return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;};
+const dayLbl=t=>{const d=new Date(t);return `${d.getDate()}/${d.getMonth()+1}`;};
+const dtLbl=t=>{const d=new Date(t);return `${d.getDate()}/${d.getMonth()+1}/${String(d.getFullYear()).slice(2)} · ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;};
+function series(atts){/* per attempt when few, per day when many */
+  const byDay=atts.length>12;const groups=[];
+  atts.forEach((a,k)=>{const key=byDay?dayKey(a.t):k;let g=groups[groups.length-1];if(!g||g.key!==key){g={key,lbl:byDay?dayLbl(a.t):String(k+1),c:0,n:0,cs:0};groups.push(g);}g.c+=a.c;g.n+=a.n;g.cs+=a.cs||0;});
+  return{byDay,acc:groups.map(g=>({l:g.lbl,y:Math.round(g.c/g.n*100)})),spd:groups.filter(g=>g.c>0).map(g=>({l:g.lbl,y:Math.round(g.cs/g.c*10)/10}))};}
+function lineChart(pts,o){const W=340,H=150,L=34,R=10,T=14,B=26;if(!pts.length)return `<div class="chempty">${o.empty}</div>`;
+  const max=o.max!=null?o.max:Math.max(5,Math.ceil(Math.max(...pts.map(p=>p.y))*1.15/5)*5);const n=pts.length;
+  const X=i=>n===1?(L+W-R)/2:L+i*(W-L-R)/(n-1),Y=v=>T+(H-T-B)*(1-v/max);
+  const grid=[0,.5,1].map(f=>{const v=Math.round(max*f);return `<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#e6ebf5"/><text x="${L-5}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="#8a91a8">${v}${o.unit}</text>`;}).join('');
+  const step=Math.ceil(n/8);const lbls=pts.map((p,i)=>(i%step===0||i===n-1)?`<text x="${X(i)}" y="${H-8}" text-anchor="middle" font-size="11" fill="#8a91a8">${p.l}</text>`:'').join('');
+  const d=pts.map((p,i)=>`${i?'L':'M'}${X(i).toFixed(1)} ${Y(p.y).toFixed(1)}`).join('');
+  const dots=pts.map((p,i)=>`<circle cx="${X(i)}" cy="${Y(p.y)}" r="4" fill="#fff" stroke="${o.col}" stroke-width="2.5"><title>${p.l}: ${p.y}${o.unit}</title></circle>`).join('');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" direction="ltr" role="img" aria-label="${o.title}">${grid}<path d="${d}" fill="none" stroke="${o.col}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>${dots}${lbls}</svg>`;}
+const avgY=a=>a.reduce((s,p)=>s+p.y,0)/a.length;
+function trendTxt(S){const out=[];const k=a=>Math.max(1,Math.min(3,Math.floor(a.length/2)));
+  if(S.acc.length>=2){const A=S.acc,f=avgY(A.slice(0,k(A))),l=avgY(A.slice(-k(A))),d=Math.round(l-f);
+    out.push(d>0?`📈 <b>השתפרת ב-${d}%</b> בתשובות נכונות בניסיון הראשון!`:d===0?'📊 הדיוק שלך יציב – כל הכבוד על ההתמדה!':`🌱 השלבים נעשים קשים יותר, אז הדיוק ירד קצת (${-d}%) – זה טבעי. ממשיכים! 💪`);}
+  if(S.spd.length>=2){const A=S.spd,f=avgY(A.slice(0,k(A))),l=avgY(A.slice(-k(A))),d=Math.round((f-l)*10)/10;
+    out.push(d>0?`⚡ <b>מהיר יותר ב-${d} שניות</b> לכל תשובה נכונה!`:d===0?'⏱️ הקצב שלך יציב.':`🐢 לוקח קצת יותר זמן (${-d} שניות) – זה בסדר, חושבים טוב! 🧠`);}
+  return out.length?out.join('<br>'):'עוד אין מספיק נתונים להשוואה. אחרי עוד כמה שלבים יופיע כאן השיפור שלך! 🚀';}
+function chartsBlock(atts){const S=series(atts);
+  return `<div class="trend">${trendTxt(S)}</div><div class="charts">
+   <div class="chbox"><h4>🎯 נכון בניסיון הראשון (%)</h4>${lineChart(S.acc,{max:100,unit:'%',col:'#06b38a',title:'דיוק',empty:'עוד אין שלבים'})}<small>${S.byDay?'לפי ימים':'לפי ניסיונות (1 = הראשון)'}</small></div>
+   <div class="chbox"><h4>⏱️ שניות לתשובה נכונה (נמוך = מהיר)</h4>${lineChart(S.spd,{unit:'ש׳',col:'#3a86ff',title:'זמן',empty:'עוד אין נתוני זמן'})}<small>${S.byDay?'לפי ימים':'לפי ניסיונות'}</small></div></div>`;}
+/* ---- the screen ---- */
+let PV={u:null,shown:30};
+function openProgress(u){closeModal();PV={u:u==null?null:String(u),shown:30};show('progress');renderProgress();}
+function totalsOf(atts){const c=atts.reduce((s,a)=>s+a.c,0),n=atts.reduce((s,a)=>s+a.n,0),d=atts.reduce((s,a)=>s+(a.d||0),0);return{c,n,d,pct:n?Math.round(c/n*100):null};}
+function isSolvedLater(r){const t=SAVE.qok[r.e.key];return t&&t>r.t;}
+function mistakeItem(r,idx){const later=isSolvedLater(r),pending=!later&&!!(SAVE.chal&&SAVE.chal[String(r.e.u)]&&SAVE.chal[String(r.e.u)][r.e.key]);
+  let prompt=r.pr;try{prompt=makeQ(r.e).prompt;}catch(e){}
+  const badge=later?'<span class="mb ok">✅ נפתרה נכון אחר כך</span>':r.fx?'<span class="mb fx">🔁 תוקנה באותה שאלה</span>':'';
+  const badge2=!later&&pending?'<span class="mb wait">🔥 מחכה ב"היה מאתגר"</span>':'';
+  let corr=r.c;if(!corr){try{corr='<span class="hintc">💡 '+makeQ(r.e).hint+'</span>';}catch(e){corr='';}}
+  return `<div class="mitem"><div class="mhead"><span class="mdate">🗓️ ${dtLbl(r.t)}</span><span class="mst">${r.st||''}</span><span class="msec">⏱️ ${r.s} שנ׳</span></div>
+   <div class="mprompt">${prompt}</div>
+   <div class="mans bad">❌ <b>התשובה שלי:</b> ${r.g[0]||'—'}${r.g.length>1?`<div class="mmore">ניסיונות נוספים: ${r.g.slice(1).join(' | ')}</div>`:''}</div>
+   <div class="mans good">✅ <b>התשובה הנכונה:</b> ${corr||'—'}</div>
+   <div class="mfoot">${badge}${badge2}<button class="btn ghost small mshow" data-k="${idx}">👀 הצג את השרטוט</button></div><div class="mdiag" id="md${idx}"></div></div>`;}
+function renderProgress(){const u=PV.u;const all=SAVE.att.slice().sort((a,b)=>a.t-b.t);
+  const tabs=`<div class="ptabs"><button class="ptab ${u==null?'on':''}" data-u="">🌍 הכל</button>${TOPICS.map(x=>`<button class="ptab ${String(x.id)===u?'on':''}" data-u="${x.id}">${numOf(x.id)}</button>`).join('')}</div>`;
+  let html='';
+  if(u==null){const T=totalsOf(all);const nm=LOG_KEYS.reduce((s,k)=>s+(SAVE.mlog[k]||[]).length,0);const fixedN=LOG_KEYS.reduce((s,k)=>s+(SAVE.mlog[k]||[]).filter(isSolvedLater).length,0);
+    html=`<h1>📈 הטעויות וההתקדמות שלי</h1><p class="psub">כאן רואים איפה טעיתי, מה כבר תיקנתי, ואיך אני משתפר עם הזמן. טעויות הן חלק מהלמידה! 🌱</p>${tabs}
+     <div class="pstats"><span class="pill">🎮 ניסיונות: <b>${all.length}</b></span><span class="pill">🎯 נכון בניסיון הראשון: <b>${T.pct==null?'—':T.pct+'%'}</b></span><span class="pill">⏱️ זמן תרגול: <b>${mmss(T.d)}</b></span><span class="pill">📝 טעויות שנשמרו: <b>${nm}</b> (✅ ${fixedN} תוקנו)</span></div>
+     ${chartsBlock(all)}<h3 class="ph3">לפי נושא</h3><div class="ptopics">${TOPICS.map(x=>{const k=String(x.id);const A=all.filter(a=>a.u===k);const t=totalsOf(A);const L=SAVE.mlog[k]||[];
+       return `<button class="ptopic" data-u="${k}"><span class="pn">${numOf(x.id)}</span><span class="pt"><b>${x.title}</b><small>${A.length?`${A.length} ניסיונות · ${t.pct}% נכון · ${L.length} טעויות`:'עוד לא תרגלתי'}</small></span><span class="pgo">←</span></button>`;}).join('')}</div>`;}
+  else{const A=all.filter(a=>a.u===u);const T=totalsOf(A);const L=(SAVE.mlog[u]||[]).slice().reverse();const shown=L.slice(0,PV.shown);
+    html=`<h1>📈 נושא ${numOf(parseU(u))}: ${topicTitle(parseU(u))}</h1>${tabs}
+     <div class="pstats"><span class="pill">🎮 ניסיונות: <b>${A.length}</b></span><span class="pill">🎯 נכון בניסיון הראשון: <b>${T.pct==null?'—':T.pct+'%'}</b></span><span class="pill">⏱️ זמן: <b>${mmss(T.d)}</b></span></div>
+     ${chartsBlock(A)}<h3 class="ph3">📝 הטעויות שלי (${L.length}) – החדשות למעלה</h3>
+     ${L.length?shown.map((r,i)=>mistakeItem(r,i)).join(''):'<div class="chempty">אין טעויות בנושא הזה – מושלם! 🎉 (או שעוד לא תרגלת)</div>'}
+     ${L.length>shown.length?`<button class="btn ghost" id="pMore">הצג עוד (${L.length-shown.length})</button>`:''}
+     <div class="stgacts"><button class="btn green" id="pPlay">▶ לשלבים של הנושא</button>${chalCount(parseU(u))?`<button class="btn chal" id="pChal">🔥 לתרגל את המאתגרות (${chalCount(parseU(u))})</button>`:''}</div>`;}
+  $('#progBody').innerHTML=html+`<div class="navrow" style="margin-top:18px"><button class="btn ghost" id="progBack">→ למסלול</button></div>`;
+  const B=$('#progBody');
+  B.querySelectorAll('.ptab,.ptopic').forEach(b=>b.onclick=()=>{PV={u:b.dataset.u===''?null:b.dataset.u,shown:30};renderProgress();window.scrollTo(0,0);});
+  $('#progBack').onclick=()=>show('home');
+  const on=(id,f)=>{const e=$('#'+id);if(e)e.onclick=f;};
+  on('pMore',()=>{PV.shown+=30;renderProgress();});on('pPlay',()=>openStages(parseU(u)));on('pChal',()=>startChallenge(parseU(u)));
+  if(u!=null){const L=(SAVE.mlog[u]||[]).slice().reverse();
+    B.querySelectorAll('.mshow').forEach(b=>b.onclick=()=>{const i=+b.dataset.k,box=$('#md'+i);if(box.dataset.on){box.innerHTML='';delete box.dataset.on;b.textContent='👀 הצג את השרטוט';return;}
+      try{const q=makeQ(L[i].e);const P=q.angle?makeAngleBoard(box,q.angle):makePlane(box,q.board);q.setup&&q.setup(P);P.refresh&&P.refresh();P.locked=true;box.dataset.on='1';b.textContent='🙈 הסתר';}catch(e){box.textContent='אי אפשר להציג את השרטוט';}});}
+}
+
 /* ============ navigation ============ */
 let CONF_ID=0,CONF_T=null;
 function stopConfetti(){CONF_ID++;clearTimeout(CONF_T);const c=$('#confetti');c.getContext('2d').clearRect(0,0,c.width,c.height);c.style.display='none';}
@@ -2210,7 +2356,7 @@ function migrateSave(){
     SAVE.ver=5;
   }catch(e){SAVE.ver=5;SAVE.seen=SAVE.seen||{};}
 }
-migrateSave();
+migrateSave();progClean();SAVE.ver=6;
 const st3=n=>[0,1,2].map(i=>starSvg(i<n?'#ffbe0b':'#e6ebf5')).join('');
 function continueTarget(){const r=recommended();if(r==null)return{kind:'mix'};if(!lessonDone(r)&&!triedAny(r))return{kind:'lesson',u:r};return{kind:'stage',u:r,i:nextStage(r)};}
 function go(t){if(!t||t.kind==='mix')return startPractice('mix');if(t.kind==='lesson')openLesson(t.u,true);else startStage(t.u,t.i);}
@@ -2240,7 +2386,7 @@ function cardHTML(x,cls,withNum){const u=x.id;const rec=recommended()===u;const 
     ${dn?'<span class="badge-start badge-done">🏆 הושלם</span>':rec?'<span class="badge-start">מומלץ עכשיו</span>':''}${withNum?`<span class="num">${numOf(u)}</span>`:''}<span class="ic">${ICONS[x.icon]}</span>
     <span class="ubody"><h3>${x.title}</h3><p>${x.sub}</p><span class="ex">📘 ${x.ex}</span>
       <span class="mrow">${sdRow(u)}${mt}</span>
-      <span class="acts">${nextBtn}<button class="btn sBtn" data-u="${u}">🗂️ כל השלבים</button><button class="btn ghost lBtn" data-u="${u}">${lessonDone(u)?'📖 הסבר ✓':'📖 הסבר'}</button><button class="btn chal chBtn ${chalCount(u)?'':'zero'}" data-u="${u}">🔥 היה מאתגר (${chalCount(u)})</button></span></span></div>`;}
+      <span class="acts">${nextBtn}<button class="btn sBtn" data-u="${u}">🗂️ כל השלבים</button><button class="btn ghost lBtn" data-u="${u}">${lessonDone(u)?'📖 הסבר ✓':'📖 הסבר'}</button><button class="btn chal chBtn ${chalCount(u)?'':'zero'}" data-u="${u}">🔥 היה מאתגר (${chalCount(u)})</button><button class="btn ghost pBtn" data-u="${u}">📈 הטעויות וההתקדמות</button></span></span></div>`;}
 function bindCards(root){
   root.querySelectorAll('[data-u]').forEach(c=>{
     c.onclick=e=>{if(e.target.closest('button'))return;openStages(parseU(c.dataset.u));};
@@ -2248,6 +2394,7 @@ function bindCards(root){
   root.querySelectorAll('.nBtn').forEach(b=>b.onclick=e=>{e.stopPropagation();startNext(parseU(b.dataset.u));});
   root.querySelectorAll('.sBtn').forEach(b=>b.onclick=e=>{e.stopPropagation();openStages(parseU(b.dataset.u));});
   root.querySelectorAll('.chBtn').forEach(b=>b.onclick=e=>{e.stopPropagation();startChallenge(parseU(b.dataset.u));});
+  root.querySelectorAll('.pBtn').forEach(b=>b.onclick=e=>{e.stopPropagation();openProgress(b.dataset.u);});
   root.querySelectorAll('.lBtn').forEach(b=>b.onclick=e=>{e.stopPropagation();const u=parseU(b.dataset.u);openLesson(u,!lessonDone(u));});
 }
 function renderHome(){
@@ -2264,8 +2411,9 @@ function renderHome(){
   bindCards($('#units'));
   const mb=bestOf('mix');
   $('#extras').innerHTML=`<button class="mission big" id="goQuiz"><span class="ic">${ICONS.trophy}</span><span><h3>האתגר הגדול – 15 שאלות</h3><p>שאלות מעורבות מכל הנושאים. כל תשובה נכונה בניסיון הראשון מקדמת את הציון (מתוך 100). ${mb==null?'':`השיא שלך: <b class="co">${mb}/100</b>`}</p></span></button>
+    <button class="mission" id="goProg"><span class="ic" style="font-size:54px;display:grid;place-items:center">📈</span><span><h3>הטעויות וההתקדמות שלי</h3><p>איפה טעיתי, מה כבר תיקנתי, וגרפים של שיפור בדיוק ובמהירות.</p></span></button>
     <button class="mission" id="goLab"><span class="ic">${ICONS.lab}</span><span><h3>מגרש החקירות</h3><p>גרור נקודות בחופשיות וגלה בעצמך!</p></span></button>`;
-  $('#goLab').onclick=openSandbox;$('#goQuiz').onclick=()=>startPractice('mix');
+  $('#goLab').onclick=openSandbox;$('#goProg').onclick=()=>openProgress(null);$('#goQuiz').onclick=()=>startPractice('mix');
 }
 /* ============ STAGE PICKER (one per topic): all 13 stages with difficulty label and state ============ */
 let HUB=null;
@@ -2278,9 +2426,9 @@ function renderStages(){const u=HUB,U=getU(u);const s=starsOf(u),d=diasOf(u),nx=
     return `<button class="stg k-${S.kind} ${ok?'earned':''} ${isNext?'next':''} ${open?'':'locked'}" data-i="${i}" aria-label="${stageName(i)}"><span class="sico">${S.kind==='star'?starSvg(ok?'#ffbe0b':'#e3e8f4','sg'):diaSvg(ok,'sg')}</span><b class="snum">${S.kind==='star'?S.num:S.num}</b><span class="slab">${STAGE_LABELS[i]}</span><small class="sn">${S.n} שאלות</small><span class="sst">${state}</span></button>`;};
   $('#hubSteps').innerHTML=`<h3 class="stgh">⭐ שלבי כוכב – 7 שאלות בכל שלב</h3><div class="stgrid">${Array.from({length:10},(_,i)=>tile(i)).join('')}</div>
     <h3 class="stgh">💎 שלבי יהלום – 10 שאלות קשות ${s<10?'<small>(נפתחים אחרי 10 כוכבים)</small>':''}</h3><div class="stgrid dg">${[10,11,12].map(tile).join('')}</div>
-    <div class="stgacts"><button class="btn ghost" id="hubLesson">${lessonDone(u)?'📖 הסבר ✓':'📖 הסבר'}</button><button class="btn chal ${chalCount(u)?'':'zero'}" id="hubChal">🔥 היה מאתגר (${chalCount(u)})</button></div>`;
+    <div class="stgacts"><button class="btn ghost" id="hubLesson">${lessonDone(u)?'📖 הסבר ✓':'📖 הסבר'}</button><button class="btn chal ${chalCount(u)?'':'zero'}" id="hubChal">🔥 היה מאתגר (${chalCount(u)})</button><button class="btn ghost" id="hubProg">📈 הטעויות וההתקדמות</button></div>`;
   $('#hubSteps').querySelectorAll('.stg').forEach(b=>b.onclick=()=>startStage(u,+b.dataset.i));
-  $('#hubLesson').onclick=()=>openLesson(u,!lessonDone(u));$('#hubChal').onclick=()=>startChallenge(u);
+  $('#hubLesson').onclick=()=>openLesson(u,!lessonDone(u));$('#hubChal').onclick=()=>startChallenge(u);$('#hubProg').onclick=()=>openProgress(u);
 }
 $('#hubBack').onclick=()=>show('home');
 function openUnit(u){openStages(u);}
@@ -2354,32 +2502,32 @@ function startChallenge(u){closeModal();const p=chalMap(u);const ents=shuffle(Ob
   persist();
   if(!qs.length){modal(`<div class="mascot" style="margin:0 auto;width:90px;height:96px">${ROBO}</div><h2>אין שאלות מאתגרות — הופה! 🎉</h2><p style="font-size:19px;line-height:1.6">בנושא הזה עוד לא נשארו שאלות שהיו קשות. כשתטעה בשאלה בתרגול רגיל – היא תחכה לך כאן, ואפשר יהיה לתרגל אותה שוב.</p><button class="btn green" onclick="closeModal()">מעולה! 👍</button>`);return;}
   const U=getU(u);const title=`🔥 היה מאתגר · ${u==='ang'?'זוויות':U.title}`;
-  Q={mode:'practice',pool:true,u,title,qs,idx:0,res:[],score:0,streak:0,first:true,done:false,removed:0};show('quiz');renderQ();}
+  Q={qt:[],mode:'practice',pool:true,u,title,qs,idx:0,res:[],score:0,streak:0,first:true,done:false,removed:0};show('quiz');renderQ();}
 function finishPool(){
-  Q.finished=true;const u=Q.u,n=Q.qs.length,c=Q.score,score=scoreFor(c,n);persist();show('summary');
+  Q.finished=true;const u=Q.u,n=Q.qs.length,c=Q.score,score=scoreFor(c,n);const AT=recordAttempt();persist();show('summary');
   const left=chalCount(u),rm=Q.removed||0;
   const msg=score===100?'מושלם! כל השאלות המאתגרות נכונות בניסיון הראשון! 🌟':score>=60?'יפה מאוד! אתה משתפר בשאלות הקשות 💪':'לא נורא – שאלות מאתגרות הן בדיוק בשביל ללמוד מהן 🌱';
   const note=left===0?'🎉 <b>אין יותר שאלות מאתגרות בנושא הזה — הופה!</b>':`נשארו עוד <b>${left}</b> שאלות מאתגרות. כל שאלה יוצאת מהרשימה אחרי <b>2 תשובות נכונות ברצף</b> בניסיון הראשון.`;
   const btns=[];if(left>0)btns.push(`<button class="btn orange" id="again">🔥 עוד תרגול מאתגר (${left})</button>`);
-  btns.push(`<button class="btn green" id="regular">▶ לשלבים</button>`,'<button class="btn ghost" id="toMap">🗺️ למסלול</button>');
+  btns.push(`<button class="btn green" id="regular">▶ לשלבים</button>`,`<button class="btn ghost" id="toProg">📈 הטעויות וההתקדמות</button>`,'<button class="btn ghost" id="toMap">🗺️ למסלול</button>');
   $('#sumCard').innerHTML=`<div class="talk mood-happy" style="justify-content:center"><div class="mascot" style="width:120px;height:130px">${ROBO}</div></div>
    <div class="qnum" style="font-size:18px">${Q.title}</div><div class="sumscore" id="sumScore">${score}<small>/100</small></div>
    <div class="mmsg" id="mMsg">🔥 תרגול מאתגר – התרגול כאן לא משפיע על הכוכבים והיהלומים. ${rm?`הוצאת <b>${rm}</b> שאלות מהרשימה! ✅`:'המשך כך!'}</div>
-   <div class="summsg">${msg}</div><div class="sumsub">נכון בניסיון הראשון: <b>${c} מתוך ${n}</b><br>${note}</div>
+   <div class="summsg">${msg}</div><div class="sumsub">נכון בניסיון הראשון: <b>${c} מתוך ${n}</b><br>${note}</div>${timeLine(AT)}
    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">${btns.join('')}</div>`;
   const on=(id,f)=>{const e=$('#'+id);if(e)e.onclick=f;};
-  on('again',()=>startChallenge(u));on('regular',()=>startNext(u));on('toMap',()=>show('home'));
+  on('again',()=>startChallenge(u));on('toProg',()=>openProgress(u));on('regular',()=>startNext(u));on('toMap',()=>show('home'));
   if(score===100){sfx('win');confetti(3500,200);}else sfx('good');
 }
 function startPractice(u){closeModal();if(u!=='mix')return startNext(u);const qs=drawSession(u);
-  Q={mode:'practice',u,title:'🏆 האתגר הגדול',qs,idx:0,res:[],score:0,streak:0,first:true,done:false};show('quiz');renderQ();}
+  Q={qt:[],mode:'practice',u,title:'🏆 האתגר הגדול',qs,idx:0,res:[],score:0,streak:0,first:true,done:false};show('quiz');renderQ();}
 /* ---- a stage = a fixed set of questions (ranks from..to of the topic's difficulty order); only a perfect run (all first-try) earns it ---- */
 function startNext(u){const i=nextStage(u);if(i==null)return openStages(u);startStage(u,i);}
 function startStage(u,i,retry){closeModal();if(!stageOpen(u,i)){HUB=u;if(!$('#unit').classList.contains('on')){show('unit');renderStages();}return lockedMsg(u);}
   const S=STAGES[i];let qs=[];getBank(u).slice(S.from,S.to).forEach(e=>{try{qs.push(makeQ(e));}catch(err){}});
   if(retry)qs=shuffle(qs);
   SAVE.lastU=String(u);persist();
-  Q={mode:'stage',u,stage:i,title:`${topicTitle(u)} · ${stageName(i)}`,qs,idx:0,res:[],score:0,streak:0,first:true,done:false,retry:!!retry};show('quiz');renderQ();}
+  Q={qt:[],mode:'stage',u,stage:i,title:`${topicTitle(u)} · ${stageName(i)}`,qs,idx:0,res:[],score:0,streak:0,first:true,done:false,retry:!!retry};show('quiz');renderQ();}
 function startMix(){startPractice('mix');}
 function renderProg(){
   $('#qProg').innerHTML=Q.qs.map((_,k)=>{const r=Q.res[k];return `<span class="${r==='st'?'st':r==='ok'?'ok':k===Q.idx&&!Q.finished?'cur':''}">${r==='st'?starSvg():r==='ok'?checkSvg:''}</span>`;}).join('');
@@ -2387,7 +2535,7 @@ function renderProg(){
   $('#qStreak').innerHTML=Q.streak>=2?`🔥 רצף של ${Q.streak}!`:'';
 }
 function renderQ(){
-  const q=Q.qs[Q.idx];Q.first=true;Q.done=false;
+  const q=Q.qs[Q.idx];Q.first=true;Q.done=false;Q.curLog=null;tmStart();
   $('#qNum').textContent=`${Q.title} · שאלה ${Q.idx+1} מתוך ${Q.qs.length}`;$('#qPrompt').innerHTML=q.prompt;$('#qNext').style.display='none';
   Q.ctl=mountQ(q,{plane:'#qPlane',ans:'#qAns',read:'#qRead',auto:false,quiz:true,say:(h,m)=>say('#qTalk',h,m),isDone:()=>Q.done,result:answer});Q.P=Q.ctl.P;
   renderProg();
@@ -2396,8 +2544,9 @@ const PRAISE=['כל הכבוד, אדם! 🌟','מעולה! בדיוק ככה! �
 const RETRY_PRAISE=['יופי, תיקנת! ככה בדיוק לומדים 💪','הצלחת! התעקשות זה כוח 🌱','נכון! עכשיו זה כבר שלך 👍'];
 const OOPS=['כמעט! ננסה שוב 🙂','לא נורא, אדם, עוד ניסיון!','אופס, קרוב! נסה שוב'];
 let Q=null;
-function answer(ok){
-  const q=Q.qs[Q.idx];
+function answer(ok,given){
+  const q=Q.qs[Q.idx];const secs=tmRead()/1000;
+  try{if(ok){tmStop();Q.qt[Q.idx]=Math.round(secs*10)/10;if(Q.first)markOk(q);else logFixed(secs);}else if(Q.first)logWrong(q,given,secs);else logRetryWrong(given);}catch(e){}
   if(ok){Q.done=true;Q.P.locked=true;Q.res[Q.idx]=Q.first?'st':'ok';
     if(Q.first){Q.score++;Q.streak++;if(Q.pool)chalRight(q);}
     sfx('good');say('#qTalk',(Q.first?pick(PRAISE):pick(RETRY_PRAISE)),'happy');
@@ -2420,18 +2569,18 @@ function finishRound(){
   if(Q.mode==='stage')return finishStage();
   /* the big challenge: 15 mixed questions, score out of 100 (no stages) */
   Q.finished=true;const c=Q.score,score=scoreFor(c,Q.qs.length),u=Q.u;const rec=US(u);const prev=rec.best;
-  rec.last=score;rec.n=(rec.n||0)+1;const improved=prev==null||score>prev;if(improved)rec.best=score;persist();show('summary');
+  const AT=recordAttempt();rec.last=score;rec.n=(rec.n||0)+1;const improved=prev==null||score>prev;if(improved)rec.best=score;persist();show('summary');
   const [msg,sub]=resultMsg(score);
   $('#sumCard').innerHTML=`${score===100?`<div class="trophy">${ICONS.trophy}</div>`:`<div class="talk mood-happy" style="justify-content:center"><div class="mascot" style="width:120px;height:130px">${ROBO}</div></div>`}
    <div class="qnum" style="font-size:18px">${Q.title}</div><div class="sumscore" id="sumScore">${score}<small>/100</small></div>${dotsRow()}
-   <div class="summsg">${msg}</div><div class="sumsub">${sub}<br>נכון בניסיון הראשון: <b>${c} מתוך ${Q.qs.length}</b> · השיא שלך: <span class="co">${rec.best}/100</span>${improved&&prev!=null?'<br>🎉 זה שיא חדש!':''}</div>
-   <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><button class="btn orange" id="again">🔄 עוד 15 שאלות חדשות</button><button class="btn ghost" id="toMap">🗺️ למסלול</button></div>`;
-  $('#again').onclick=()=>startPractice('mix');$('#toMap').onclick=()=>show('home');
+   <div class="summsg">${msg}</div><div class="sumsub">${sub}<br>נכון בניסיון הראשון: <b>${c} מתוך ${Q.qs.length}</b> · השיא שלך: <span class="co">${rec.best}/100</span>${improved&&prev!=null?'<br>🎉 זה שיא חדש!':''}</div>${timeLine(AT)}
+   <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><button class="btn orange" id="again">🔄 עוד 15 שאלות חדשות</button><button class="btn ghost" id="toProg">📈 ההתקדמות שלי</button><button class="btn ghost" id="toMap">🗺️ למסלול</button></div>`;
+  $('#toProg').onclick=()=>openProgress(null);$('#again').onclick=()=>startPractice('mix');$('#toMap').onclick=()=>show('home');
   if(score===100){sfx('win');confetti(6000,320);CONF_T=setTimeout(()=>confetti(3500,160),1800);}else sfx('good');
 }
 function finishStage(){
   Q.finished=true;const u=Q.u,i=Q.stage,S=STAGES[i],n=Q.qs.length,c=Q.score,perfect=c===n;const rec=US(u);
-  const wasEarned=earned(u,i),starsBefore=starsOf(u),wasDone=isDone(u);
+  const AT=recordAttempt();const wasEarned=earned(u,i),starsBefore=starsOf(u),wasDone=isDone(u);
   rec.n=(rec.n||0)+1;rec.sb[i]=Math.max(bestStage(u,i),c);
   if(perfect)rec.sg[i]=1;
   const doneNow=!wasDone&&isDone(u),starsNow=starsOf(u),unlockedDia=perfect&&starsBefore<10&&starsNow>=10&&!doneNow;
@@ -2449,13 +2598,13 @@ function finishStage(){
   const btns=[];
   if(perfect){if(nx!=null&&stageOpen(u,nx))btns.push(`<button class="btn green" id="goNext">➡ ${stageName(nx)}</button>`);}
   else{btns.push(`<button class="btn orange" id="again">🔄 לנסות שוב</button>`);btns.push(`<button class="btn" id="toLesson">📖 הסבר</button>`);}
-  btns.push(`<button class="btn ${perfect?'':'ghost'}" id="toStages">🗂️ כל השלבים</button>`,'<button class="btn ghost" id="toMap">🗺️ למסלול</button>');
+  btns.push(`<button class="btn ${perfect?'':'ghost'}" id="toStages">🗂️ כל השלבים</button>`,`<button class="btn ghost" id="toProg">📈 הטעויות וההתקדמות</button>`,'<button class="btn ghost" id="toMap">🗺️ למסלול</button>');
   $('#sumCard').innerHTML=`${perfect?`<div class="trophy">${ICONS.trophy}</div>`:`<div class="talk mood-happy" style="justify-content:center"><div class="mascot" style="width:120px;height:130px">${ROBO}</div></div>`}
    <div class="qnum" style="font-size:18px">${Q.title}</div><div class="sumscore stg7" id="sumScore">${c}<small>/${n}</small></div>${dotsRow()}
-   <div class="mmsg ${perfect?'good':''}" id="mMsg">${msg}</div><div class="summsg">${big}</div><div class="sumsub">${sub}</div>
+   <div class="mmsg ${perfect?'good':''}" id="mMsg">${msg}</div><div class="summsg">${big}</div><div class="sumsub">${sub}</div>${timeLine(AT)}
    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">${btns.join('')}</div>`;
   const on=(id,f)=>{const e=$('#'+id);if(e)e.onclick=f;};
-  on('again',()=>startStage(u,i,true));on('goNext',()=>startStage(u,nx));on('toStages',()=>openStages(u));on('toMap',()=>show('home'));on('toLesson',()=>openLesson(u,!lessonDone(u)));
+  on('again',()=>startStage(u,i,true));on('goNext',()=>startStage(u,nx));on('toStages',()=>openStages(u));on('toProg',()=>openProgress(u));on('toMap',()=>show('home'));on('toLesson',()=>openLesson(u,!lessonDone(u)));
   if(perfect){sfx('win');confetti(doneNow?9000:unlockedDia?7000:4500,doneNow?520:unlockedDia?400:260);if(doneNow||unlockedDia)CONF_T=setTimeout(()=>confetti(3500,160),1800);}else sfx('good');
 }
 
@@ -2465,7 +2614,7 @@ document.addEventListener('keydown',e=>{
   if($('#quiz').classList.contains('on')){const a=$('#qAns');if(a._key&&!Q.done){a._key(e.key);return;}if(e.key==='Enter'&&Q.done)$('#qNext').click();}
   else if($('#lesson').classList.contains('on')){const a=$('#lAns');if(a._key&&!LS.done){a._key(e.key);return;}if(e.key==='Enter'&&!$('#modal').classList.contains('on')&&LS.done)$('#lNext').click();}
 });
-window.__app={get SAVE(){return SAVE;},UNITS,TPL,buildQ,buildVariant,get Q(){return Q;},get LS(){return LS;},unitOpen,lessonDone,mountQ,makePlane,ANGU,makeAngleBoard,diag,canonName,canonArc,equivNames,labelPos,validSpec,nextStep:continueTarget,startPractice,renderQ,openUnit,openLesson,renderStep,startMix,show,finishRound,getBank,drawSession,makeQ,scoreFor,answerQ:answer,STAGES,STAGE_LABELS,stageEntries,sgOf,earned,starsOf,diasOf,stagesOf,isDone,stageOpen,nextStage,bestStage,startStage,startNext,openStages,renderStages,get HUB(){return HUB;},startChallenge,chalCount,chalMap,chalClean,finishPool,finishStage,totalStars,totalDias,stageTotals,doneCount,recommended,migrateSave,bestOf,lastOf,practicedCount,SESSION_N,BANK_N};
+window.__app={get SAVE(){return SAVE;},UNITS,TPL,buildQ,buildVariant,get Q(){return Q;},get LS(){return LS;},unitOpen,lessonDone,mountQ,makePlane,ANGU,makeAngleBoard,diag,canonName,canonArc,equivNames,labelPos,validSpec,nextStep:continueTarget,startPractice,renderQ,openUnit,openLesson,renderStep,startMix,show,finishRound,getBank,drawSession,makeQ,scoreFor,answerQ:answer,STAGES,STAGE_LABELS,stageEntries,sgOf,earned,starsOf,diasOf,stagesOf,isDone,stageOpen,nextStage,bestStage,startStage,startNext,openStages,renderStages,get HUB(){return HUB;},startChallenge,chalCount,openProgress,renderProgress,recordAttempt,get TM(){return TM;},chalMap,chalClean,finishPool,finishStage,totalStars,totalDias,stageTotals,doneCount,recommended,migrateSave,bestOf,lastOf,practicedCount,SESSION_N,BANK_N};
 persist();renderHome();
 
 </script>
