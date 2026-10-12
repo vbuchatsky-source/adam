@@ -340,6 +340,18 @@ body{font-family:"Rubik","Varela Round","Segoe UI","Arial Hebrew",Arial,sans-ser
 .exreview{text-align:right;margin:10px 0}
 .prog span.bad{background:#ffe0e6;color:#e63946;font-weight:900}
 .opt.showright{outline:4px solid #06d6a0}
+/* v10 subjects + English */
+.subjbar{display:flex;gap:10px;margin:0 0 14px}.subj{flex:1;border:3px solid #d9def0;background:#fff;border-radius:20px;padding:12px;font:inherit;font-size:22px;font-weight:900;cursor:pointer;box-shadow:0 5px 0 #dfe5f3}
+.subj.on{background:linear-gradient(135deg,#8338ec,#3a86ff);color:#fff;border-color:transparent}
+.enlessons{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin:10px 0 16px}
+.enl{display:flex;gap:12px;background:#fff;border-radius:22px;padding:14px;box-shadow:0 5px 0 #dfe5f3}.enl.done{background:#f0fff8}
+.enl .num{min-width:40px;height:40px;border-radius:50%;background:#ff4d8d;color:#fff;display:grid;place-items:center;font-weight:900}
+.enl h3{margin:0 0 2px}.enl p{margin:0 0 6px;color:#6b7280;font-size:14px}.enl .ubody{flex:1}.enl .acts{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.enbar{display:block;height:10px;background:#e6ebf5;border-radius:6px;overflow:hidden}.enbar i{display:block;height:100%;background:#06d6a0}
+.enq{max-width:720px;margin:0 auto}.enask{font-size:19px;color:#5b5f77}.enword{font-size:38px;font-weight:900;margin:6px 0;display:flex;gap:10px;align-items:center;justify-content:center}
+#enqPrompt{text-align:center}.enopts{margin:14px 0}.enopt[dir=ltr]{font-family:inherit}
+.enwl{max-height:60vh;overflow:auto;text-align:right}.enwr{display:flex;gap:10px;align-items:center;padding:6px 4px;border-bottom:1px solid #eef1f8;font-size:18px}.enwr b{min-width:120px;text-align:left}.enwr.m{background:#f0fff8}
+.spk{padding:4px 10px!important;font-size:18px!important}
 /* ===== angles side-track ===== */
 .sidetrack{margin:22px 0 8px;padding:14px 12px 16px;border-radius:30px;background:repeating-linear-gradient(45deg,#f3eeff,#f3eeff 14px,#ece5ff 14px,#ece5ff 28px);border:3px dashed #a78bfa}
 .sidehead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0 4px 10px}
@@ -423,6 +435,7 @@ body{font-family:"Rubik","Varela Round","Segoe UI","Arial Hebrew",Arial,sans-ser
 <!-- HOME / PLAN -->
 <section id="home" class="screen on">
  <div class="home">
+  <div id="subjHome"></div>
   <div class="hero">
     <div class="mascot" id="homeMascot"></div>
     <div class="heroTxt">
@@ -509,6 +522,19 @@ body{font-family:"Rubik","Varela Round","Segoe UI","Arial Hebrew",Arial,sans-ser
 <!-- EXAMS -->
 <section id="exams" class="screen">
  <div class="home progview" id="examBody"></div>
+</section>
+
+<!-- ENGLISH -->
+<section id="english" class="screen">
+ <div class="home" id="enBody"></div>
+</section>
+<section id="enquiz" class="screen">
+ <div class="home enq">
+  <div class="card"><div id="enqHead"></div><div class="prompt" id="enqPrompt"></div></div>
+  <div class="opts enopts" id="enqOpts"></div>
+  <div class="talk" id="enTalk"><div class="mascot"></div><div class="bubble"></div></div>
+  <div class="navrow"><span></span><button class="btn green pulse" id="enNext" style="display:none">לשאלה הבאה ←</button></div>
+ </div>
 </section>
 
 <!-- SUMMARY -->
@@ -2200,7 +2226,7 @@ function makeVariant(e,att){if(!att)return e;const ck=e.u+':'+e.rank+':'+e.key+'
   return VAR_CACHE[ck]=v;}
 
 /* ============ v7: timing, mistake log, attempt history, progress screen ============ */
-const LOG_CAP=500,ATT_CAP=3000,LOG_KEYS=['1','2','3','4','5','6','7','8','9','ang'];
+const LOG_CAP=500,ATT_CAP=3000,LOG_KEYS=['1','2','3','4','5','6','7','8','9','ang','en'];
 /* ---- question timer: counts only while the tab is visible ---- */
 const TM={acc:0,since:null,run:false};
 const tNow=()=>performance.now();
@@ -2286,19 +2312,22 @@ function openProgress(u){closeModal();PV={u:u==null?null:String(u),shown:30};sho
 function totalsOf(atts){const c=atts.reduce((s,a)=>s+a.c,0),n=atts.reduce((s,a)=>s+a.n,0),d=atts.reduce((s,a)=>s+(a.d||0),0);return{c,n,d,pct:n?Math.round(c/n*100):null};}
 function isSolvedLater(r){const t=Math.max(SAVE.qok[r.e.key]||0,SAVE.qok[r.e.base]||0);return t&&t>r.t;}
 function mistakeItem(r,idx){const later=isSolvedLater(r),pending=!later&&!!(SAVE.chal&&SAVE.chal[String(r.e.u)]&&SAVE.chal[String(r.e.u)][r.e.key]);
-  let prompt=r.pr;try{prompt=makeQ(r.e).prompt;}catch(e){}
+  let prompt=r.pr;if(!r.en)try{prompt=makeQ(r.e).prompt;}catch(e){}
   const badge=later?'<span class="mb ok">✅ נפתרה נכון אחר כך</span>':r.fx?'<span class="mb fx">🔁 תוקנה באותה שאלה</span>':'';
   const badge2=!later&&pending?'<span class="mb wait">🔥 מחכה ב"היה מאתגר"</span>':'';
-  let corr=r.c;if(!corr){try{corr='<span class="hintc">💡 '+makeQ(r.e).hint+'</span>';}catch(e){corr='';}}
+  let corr=r.c;if(!corr&&!r.en){try{corr='<span class="hintc">💡 '+makeQ(r.e).hint+'</span>';}catch(e){corr='';}}
   return `<div class="mitem"><div class="mhead"><span class="mdate">🗓️ ${dtLbl(r.t)}</span><span class="mst">${r.st||''}</span><span class="msec">⏱️ ${r.s} שנ׳</span></div>
    <div class="mprompt">${prompt}</div>
    <div class="mans bad">❌ <b>התשובה שלי:</b> ${r.g[0]||'—'}${r.g.length>1?`<div class="mmore">ניסיונות נוספים: ${r.g.slice(1).join(' | ')}</div>`:''}</div>
    <div class="mans good">✅ <b>התשובה הנכונה:</b> ${corr||'—'}</div>
-   <div class="mfoot">${badge}${badge2}<button class="btn ghost small mshow" data-k="${idx}">👀 הצג את השרטוט</button></div><div class="mdiag" id="md${idx}"></div></div>`;}
+   <div class="mfoot">${badge}${badge2}${r.en?'':`<button class="btn ghost small mshow" data-k="${idx}">👀 הצג את השרטוט</button>`}</div><div class="mdiag" id="md${idx}"></div></div>`;}
 function renderProgress(){const u=PV.u;const all=SAVE.att.slice().sort((a,b)=>a.t-b.t);
-  const tabs=`<div class="ptabs"><button class="ptab ${u==null?'on':''}" data-u="">🌍 הכל</button><button class="ptab ${u==='exam'?'on':''}" data-u="exam">📝 מבחנים</button>${TOPICS.map(x=>`<button class="ptab ${String(x.id)===u?'on':''}" data-u="${x.id}">${numOf(x.id)}</button>`).join('')}</div>`;
+  const tabs=`<div class="ptabs"><button class="ptab ${u==null?'on':''}" data-u="">🌍 הכל</button><button class="ptab ${u==='exam'?'on':''}" data-u="exam">📝 מבחנים</button><button class="ptab ${u==='en'?'on':''}" data-u="en">🔤 אנגלית</button>${TOPICS.map(x=>`<button class="ptab ${String(x.id)===u?'on':''}" data-u="${x.id}">${numOf(x.id)}</button>`).join('')}</div>`;
   let html='';
-  if(u==='exam'){const A=all.filter(a=>a.m==='exam');const T=totalsOf(A);const L=[];LOG_KEYS.forEach(k=>(SAVE.mlog[k]||[]).forEach(r=>{if(r.ex)L.push(r);}));L.sort((a,b)=>b.t-a.t);PV.list=L;const shown=L.slice(0,PV.shown);
+  if(u==='en'){const A=all.filter(a=>a.u==='en');const P=A.filter(a=>a.m==='en'),X=A.filter(a=>a.m==='enexam');const T=totalsOf(A);const L=(SAVE.mlog.en||[]).slice().reverse();PV.list=L;const shown=L.slice(0,PV.shown);
+    html=`<h1>📈 אנגלית – הטעויות וההתקדמות שלי</h1>${tabs}<div class="pstats"><span class="pill">🎓 נלמדו: <b>${enDone().length}/${EN_WORDS.length}</b></span><span class="pill">📚 נשארו: <b>${enLeft().length}</b></span><span class="pill">🎯 נכון: <b>${T.pct==null?'—':T.pct+'%'}</b></span><span class="pill">⏱️ זמן: <b>${mmss(T.d)}</b></span>${enState().ex.best!=null?`<span class="pill">📝 שיא מבחן: <b>${enState().ex.best}/100</b></span>`:''}</div>
+     <h3 class="ph3">✏️ תרגול</h3>${chartsBlock(P)}${X.length?`<h3 class="ph3">🎓 מבחן סוף שנה</h3>${chartsBlock(X)}`:''}<h3 class="ph3">📝 הטעויות שלי (${L.length}) – החדשות למעלה</h3>${L.length?shown.map((r,i)=>mistakeItem(r,i)).join(''):'<div class="chempty">עוד אין טעויות באנגלית 🎉</div>'}${L.length>shown.length?`<button class="btn ghost" id="pMore">הצג עוד (${L.length-shown.length})</button>`:''}<div class="stgacts"><button class="btn green" id="pEn">🔤 לאנגלית</button></div>`;}
+  else if(u==='exam'){const A=all.filter(a=>a.m==='exam');const T=totalsOf(A);const L=[];LOG_KEYS.forEach(k=>(SAVE.mlog[k]||[]).forEach(r=>{if(r.ex)L.push(r);}));L.sort((a,b)=>b.t-a.t);PV.list=L;const shown=L.slice(0,PV.shown);
     html=`<h1>📈 התקדמות במבחנים</h1>${tabs}<div class="pstats"><span class="pill">📝 מבחנים: <b>${A.length}</b></span><span class="pill">🎯 ממוצע: <b>${T.pct==null?'—':T.pct+'/100'}</b></span><span class="pill">⏱️ זמן: <b>${mmss(T.d)}</b></span></div>${chartsBlock(A)}
      <h3 class="ph3">🏅 השיאים שלי</h3><div class="ptopics">${EXAMS.map(E=>{const r=examRec(E.id);return `<div class="ptopic"><span class="pn">${E.num}</span><span class="pt"><b>${E.title}</b><small>${r.best==null?'עוד לא נבחנתי':`שיא ${r.best}/100 · ${r.n} ניסיונות`}</small></span></div>`;}).join('')}</div>
      <h3 class="ph3">📝 טעויות במבחנים (${L.length})</h3>${L.length?shown.map((r,i)=>mistakeItem(r,i)).join(''):'<div class="chempty">עוד אין טעויות במבחנים 🎉</div>'}${L.length>shown.length?`<button class="btn ghost" id="pMore">הצג עוד (${L.length-shown.length})</button>`:''}<div class="stgacts"><button class="btn green" id="pExams">📝 למבחנים</button></div>`;}
@@ -2319,7 +2348,7 @@ function renderProgress(){const u=PV.u;const all=SAVE.att.slice().sort((a,b)=>a.
   B.querySelectorAll('.ptab,.ptopic').forEach(b=>b.onclick=()=>{PV={u:b.dataset.u===''?null:b.dataset.u,shown:30};renderProgress();window.scrollTo(0,0);});
   $('#progBack').onclick=()=>show('home');
   const on=(id,f)=>{const e=$('#'+id);if(e)e.onclick=f;};
-  on('pExams',()=>openExams());on('pMore',()=>{PV.shown+=30;renderProgress();});on('pPlay',()=>openStages(parseU(u)));on('pChal',()=>startChallenge(parseU(u)));
+  on('pEn',()=>show('english'));on('pExams',()=>openExams());on('pMore',()=>{PV.shown+=30;renderProgress();});on('pPlay',()=>openStages(parseU(u)));on('pChal',()=>startChallenge(parseU(u)));
   if(u!=null){const L=PV.list||[];bindDiag(B,i=>L[+i]);}
 }
 function bindDiag(B,get){
@@ -2341,11 +2370,11 @@ function confetti(dur=3800,count=200){
       else ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);ctx.restore();});
     if(my!==CONF_ID)return;if(t-t0<dur)requestAnimationFrame(f);else{ctx.clearRect(0,0,c.width,c.height);c.style.display='none';}})(t0);
 }
-function show(id){stopConfetti();if(id!=='quiz'){const qz=document.querySelector('#quiz');if(qz)qz.classList.remove('examMode');}document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));window.scrollTo(0,0);if(id==='home')renderHome();}
+function show(id){stopConfetti();if(id!=='quiz'){const qz=document.querySelector('#quiz');if(qz)qz.classList.remove('examMode');}document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));window.scrollTo(0,0);if(id==='home')renderHome();if(id==='english')renderEnglish();}
 function modal(html){$('#modalBox').innerHTML=html;$('#modal').classList.add('on');}
 function closeModal(){$('#modal').classList.remove('on');}
 $('#modal').addEventListener('pointerdown',e=>{if(e.target.id==='modal')closeModal();});
-$('#homeBtn').onclick=()=>{closeModal();show('home');};
+$('#homeBtn').onclick=()=>{closeModal();show(SAVE.subj==='en'?'english':'home');};
 $('#soundBtn').onclick=()=>{soundOn=!soundOn;$('#soundBtn').textContent=soundOn?'🔊':'🔇';};
 $('#starIcon').innerHTML=starSvg();
 const RULES=`<div class="mascot" style="margin:0 auto;width:80px;height:86px">${ROBO}</div><h2>📘 התזכורת של רובי</h2><ol class="rules">
@@ -2412,7 +2441,7 @@ function migrateSave(){
     SAVE.ver=5;
   }catch(e){SAVE.ver=5;SAVE.seen=SAVE.seen||{};}
 }
-migrateSave();progClean();SAVE.ver=8;
+migrateSave();progClean();SAVE.ver=9;
 const st3=n=>[0,1,2].map(i=>starSvg(i<n?'#ffbe0b':'#e6ebf5')).join('');
 function continueTarget(){const r=recommended();if(r==null)return{kind:'mix'};if(!lessonDone(r)&&!triedAny(r))return{kind:'lesson',u:r};return{kind:'stage',u:r,i:nextStage(r)};}
 function go(t){if(!t||t.kind==='mix')return startPractice('mix');if(t.kind==='lesson')openLesson(t.u,true);else startStage(t.u,t.i);}
@@ -2455,6 +2484,7 @@ function bindCards(root){
 }
 function renderHome(){
   const p=practicedCount(),d=doneCount(),ts=totalStars(),td=totalDias(),r=recommended();
+  $('#subjHome').innerHTML=subjBar('math');bindSubj($('#subjHome'));
   $('#heroSay').innerHTML=heroMessage();
   $('#stats').innerHTML=`<span class="pill">${starSvg()} כוכבים: ${ts}/100</span><span class="pill">${diaSvg(true,'dia')} יהלומים: ${td}/30</span><span class="pill">🏆 הושלמו: ${d}/10</span>`;
   $('#planSub').innerHTML=`הכל פתוח! 🔓 בחר נושא ושלב מתי שאתה רוצה. <b>סדר מומלץ: 1 ← 10</b>. ⭐ 10 כוכבים בכל נושא פותחים 💎 3 יהלומים.`;
@@ -2695,6 +2725,100 @@ function stageWrong(given){const q=Q.qs[Q.idx];if(Q.done)return;const secs=tmSto
   try{const t=$('#qTalk');const r=t.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)t.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}}
 window.__app.makeVariant=makeVariant;window.__app.qSig=qSig;
 
+/* ============ v10: English vocabulary (Unit 1, Adam's workbook) ============ */
+/* [id, english, hebrew, part-of-speech, synonym-group(optional)] grouped in book order */
+const EN_LESSONS=[
+ {t:'מילים חדשות א׳',src:'Student\'s Book p.10 B2 (1–11)',w:[['coat','coat','מעיל','n'],['cover','cover (n)','מכסה, כיסוי','n'],['dangerous','dangerous','מסוכן','adj'],['degree','degree','מעלה (טמפרטורה)','n'],['destroy','destroy','להרוס','v'],['fall','fall (n, v)','ליפול; נפילה','v'],['free','free (adj)','חופשי; בחינם','adj'],['geton','get on','לעלות (על אוטובוס, רכבת)','v'],['gofishing','go fishing','לצאת לדוג','v'],['ground','ground (n)','אדמה, קרקע','n'],['heat','heat (n)','חום','n']]},
+ {t:'מילים חדשות ב׳',src:'Student\'s Book p.10 B2 (12–22)',w:[['kindof','kind of','סוג של; די, במידה מסוימת','x'],['luckily','luckily','למרבה המזל','x'],['makeplans','make plans','לתכנן תוכניות','v'],['outside','outside','בחוץ','x'],['park','park (n)','פארק, גן ציבורי','n'],['pleasant','pleasant','נעים','adj'],['puton','put on','ללבוש, לשים על עצמך','v','wear'],['rain','rain (n, v)','גשם; לרדת גשם','n'],['scarf','scarf','צעיף','n'],['sea','sea','ים','n'],['shine','shine','לזרוח','v']]},
+ {t:'מילים חדשות ג׳',src:'Student\'s Book p.10 B2 (23–32)',w:[['snow','snow (n)','שלג','n'],['stay','stay','להישאר','v'],['surprised','surprised','מופתע','adj'],['temperature','temperature','טמפרטורה','n'],['turnon','turn on','להדליק (מכשיר)','v'],['wakeup','wake up','להתעורר','v'],['warm','warm (adj)','חמים, חם','adj'],['wave','wave (n)','גל','n'],['weather','weather','מזג אוויר','n'],['wind','wind (n)','רוח','n']]},
+ {t:'קריאה – זוכרים? 1',src:'Reading p.10 B1 (1)',w:[['people','people','אנשים','n'],['anyone','anyone','מישהו, כל אחד','x'],['strong','strong','חזק','adj'],['closev','close (v)','לסגור','v'],['wonderful','wonderful','נפלא, נהדר','adj'],['umbrella','umbrella','מטרייה','n'],['wear','wear','ללבוש, להיות לבוש ב-','v','wear'],['push','push','לדחוף','v'],['soccer','soccer','כדורגל','n']]},
+ {t:'קריאה – זוכרים? 2',src:'Reading p.10 B1 (2)',w:[['happen','happen','לקרות','v'],['angry','angry','כועס','adj'],['suddenly','suddenly','פתאום','x'],['tired','tired','עייף','adj'],['pull','pull','למשוך','v'],['beach','beach','חוף ים','n'],['pay','pay','לשלם','v'],['wrong','wrong','לא נכון, שגוי','adj','false']]},
+ {t:'מילות הוראה',src:'Instructions at a Glance A+B',w:[['lookup','look up','לחפש (במילון)','v'],['glossary','glossary','מילון (בסוף הספר)','n'],['choose','choose','לבחור','v'],['match','match','להתאים','v'],['discuss','discuss','לשוחח, לדון','v'],['below','below','למטה, מתחת','x'],['correct','correct','נכון','adj'],['complete','complete','להשלים','v'],['opposites','opposites','הפכים','n'],['false','false','לא נכון (לא אמת)','adj','false'],['compare','compare','להשוות','v'],['translate','translate','לתרגם','v'],['check','check (v)','לבדוק','v'],['atleast','at least','לפחות','x'],['contrast','contrast','לנגד, למצוא הבדלים','v']]},
+ {t:'האזנה – זוכרים?',src:'Listening: Predicting the Weather',w:[['sure','sure','בטוח','adj'],['high','high','גבוה','adj'],['dark','dark','כהה, חשוך','adj'],['interesting','interesting','מעניין','adj'],['trip','trip (n)','טיול','n'],['feel','feel','להרגיש, לחוש','v'],['way','way','דרך','n'],['tip','tip','עצה, טיפ','n'],['important','important','חשוב','adj']]},
+ {t:'מילים חדשות ד׳',src:'Student\'s Book p.16 B2 (1–9)',w:[['certainly','certainly','בהחלט, בוודאות','x'],['closeadj','close (adj)','קרוב','adj'],['cloud','cloud','ענן','n'],['curly','curly','מתולתל','adj'],['east','east','מזרח','n'],['farmer','farmer','חקלאי','n'],['field','field','שדה','n'],['finger','finger','אצבע','n'],['hope','hope','לקוות; תקווה','v']]},
+ {t:'מילים חדשות ה׳',src:'Student\'s Book p.16 B2 (10–18)',w:[['liedown','lie down','לשכב','v'],['low','low','נמוך','adj'],['mean','mean (v)','להתכוון; פירושו','v'],['predict','predict','לחזות, לנבא','v'],['sailor','sailor','מלח, ימאי','n'],['west','west','מערב','n'],['wet','wet','רטוב','adj'],['worried','worried','מודאג','adj']]}];
+const EN_WORDS=[];EN_LESSONS.forEach((L,li)=>L.w.forEach(([id,en,he,pos,syn])=>EN_WORDS.push({id,en,he,pos,syn:syn||null,li})));
+const ENW=Object.fromEntries(EN_WORDS.map(w=>[w.id,w]));
+const EN_SESSION=10,EN_EXAM=25;
+const enSay=w=>w.en.replace(/\s*\(.*?\)\s*/g,'').trim();
+function enState(){if(!SAVE.en||typeof SAVE.en!=='object'||Array.isArray(SAVE.en))SAVE.en={};const s=SAVE.en;if(!s.w||typeof s.w!=='object')s.w={};if(!s.ex||typeof s.ex!=='object')s.ex={best:null,n:0};return s;}
+function enW(id){const s=enState();let r=s.w[id];if(!r||typeof r!=='object')r=s.w[id]={eh:0,he:0,m:0};['eh','he','m'].forEach(k=>{r[k]=Number.isFinite(+r[k])?+r[k]:0;});return r;}
+function enClean(){try{const s=enState();Object.keys(s.w).forEach(k=>{if(!ENW[k])delete s.w[k];else enW(k);});}catch(e){SAVE.en={};}}
+const enMastered=id=>!!enW(id).m;
+const enLeft=()=>EN_WORDS.filter(w=>!enMastered(w.id));
+const enDone=()=>EN_WORDS.filter(w=>enMastered(w.id));
+/* mastery: 2 correct answers in total, at least one in each direction */
+function enCredit(id,dir){const r=enW(id);r[dir]++;if(!r.m&&r.eh+r.he>=2&&r.eh>=1&&r.he>=1){r.m=Date.now();return true;}return false;}
+const speakBtn=w=>('speechSynthesis' in window)?`<button class="btn ghost small spk" data-say="${enSay(w).replace(/"/g,'')}" aria-label="השמע" title="השמע">🔊</button>`:'';
+function speak(t){try{const u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.85;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
+function bindSpk(root){root.querySelectorAll('.spk').forEach(b=>b.onclick=e=>{e.stopPropagation();speak(b.dataset.say);});}
+/* ---- a question: word + direction, 6 options, distractors of the same part of speech first ---- */
+function enQuestion(w,dir,rnd){rnd=rnd||Math.random;const sh=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+  const ok=x=>x.id!==w.id&&!(w.syn&&x.syn===w.syn)&&x.he!==w.he&&enSay(x)!==enSay(w);
+  const same=sh(EN_WORDS.filter(x=>ok(x)&&x.pos===w.pos)),other=sh(EN_WORDS.filter(x=>ok(x)&&x.pos!==w.pos));
+  const ds=same.concat(other).slice(0,5);const opts=sh([w].concat(ds));
+  return {w,dir,opts:opts.map(x=>({id:x.id,txt:dir==='eh'?x.he:x.en,ok:x.id===w.id}))};}
+function enPick(list){/* prefer the direction still missing */const out=[];shuffle(list).slice(0,EN_SESSION).forEach(w=>{const r=enW(w.id);const dir=r.eh&&!r.he?'he':r.he&&!r.eh?'eh':(Math.random()<.5?'eh':'he');out.push(enQuestion(w,dir));});return out;}
+/* ---- screens ---- */
+function setSubject(s){SAVE.subj=s;persist();show(s==='en'?'english':'home');}
+function subjBar(cur){return `<div class="subjbar"><button class="subj ${cur==='math'?'on':''}" data-s="math">🧮 חשבון</button><button class="subj ${cur==='en'?'on':''}" data-s="en">🔤 אנגלית</button></div>`;}
+function bindSubj(root){root.querySelectorAll('.subj').forEach(b=>b.onclick=()=>setSubject(b.dataset.s));}
+function renderEnglish(){const left=enLeft().length,done=enDone().length,ex=enState().ex;
+  $('#enBody').innerHTML=subjBar('en')+`<div class="hero"><div class="mascot">${ROBO}</div><div class="heroTxt"><h1><span dir="ltr">Hello Adam!</span> 👋</h1><p>מילים מיחידה 1 בספר שלך. כל מילה נשאלת <b>בשני הכיוונים</b> (אנגלית ← עברית ועברית ← אנגלית). אחרי <b>2 תשובות נכונות</b> (אחת בכל כיוון) המילה עוברת ל<b>מבחן סוף שנה</b> 🎓. אפשר ללחוץ 🔊 לשמוע איך אומרים.</p>
+   <div class="stats"><span class="pill">📚 נשארו ללמוד: <b id="enLeft">${left}</b></span><span class="pill">🎓 נלמדו: <b id="enDoneN">${done}</b>/${EN_WORDS.length}</span>${ex.best!=null?`<span class="pill">📝 שיא במבחן: <b>${ex.best}/100</b></span>`:''}</div></div></div>
+   <button class="btn green bigcont" id="enMix" ${left?'':'disabled'}>${left?`▶ תרגול – ${Math.min(EN_SESSION,left)} מילים מכל המילים שנשארו`:'🎉 למדת את כל המילים!'}</button>
+   <h2 class="planTitle">📖 השיעורים לפי סדר הספר</h2><div class="enlessons">${EN_LESSONS.map((L,li)=>{const ws=EN_WORDS.filter(w=>w.li===li),d=ws.filter(w=>enMastered(w.id)).length;return `<div class="enl ${d===ws.length?'done':''}"><span class="num">${li+1}</span><span class="ubody"><h3>${L.t}</h3><p>${L.src} · ${ws.length} מילים</p><span class="enbar"><i style="width:${Math.round(d/ws.length*100)}%"></i></span><small>🎓 ${d}/${ws.length} נלמדו</small>
+     <span class="acts"><button class="btn green small enL" data-l="${li}" ${d===ws.length?'disabled':''}>${d===ws.length?'✓ הושלם':'▶ תרגול'}</button><button class="btn ghost small enWords" data-l="${li}">👀 המילים</button></span></span></div>`;}).join('')}</div>
+   <div class="extras"><button class="mission big" id="enExam"><span class="ic" style="font-size:54px;display:grid;place-items:center">🎓</span><span><h3>מבחן סוף שנה</h3><p>${done?`${Math.min(EN_EXAM,done)} שאלות אקראיות מתוך ${done} המילים שכבר למדת, בשני הכיוונים, בלי רמזים, ציון מתוך 100.`:'כאן יופיעו המילים שלמדת. תתחיל לתרגל ותוכל להיבחן!'}</p></span></button>
+   <button class="mission" id="enProg"><span class="ic" style="font-size:54px;display:grid;place-items:center">📈</span><span><h3>הטעויות וההתקדמות שלי באנגלית</h3><p>איפה טעיתי וגרפים של שיפור.</p></span></button></div>`;
+  const B=$('#enBody');bindSubj(B);$('#enMix').onclick=()=>startEn(null);
+  B.querySelectorAll('.enL').forEach(b=>b.onclick=()=>startEn(+b.dataset.l));B.querySelectorAll('.enWords').forEach(b=>b.onclick=()=>enWordList(+b.dataset.l));
+  $('#enExam').onclick=startEnExam;$('#enProg').onclick=()=>openProgress('en');}
+function enWordList(li){const ws=EN_WORDS.filter(w=>w.li===li);modal(`<h2>📖 ${EN_LESSONS[li].t}</h2><div class="enwl">${ws.map(w=>`<div class="enwr ${enMastered(w.id)?'m':''}"><b dir="ltr">${w.en}</b>${speakBtn(w)}<span>${w.he}</span>${enMastered(w.id)?'🎓':''}</div>`).join('')}</div><button class="btn green" onclick="closeModal()">סגור</button>`);bindSpk($('#modalBox'));}
+let EQ=null;
+function startEn(li){closeModal();const pool=enLeft().filter(w=>li==null||w.li===li);if(!pool.length)return renderEnglish();
+  EQ={exam:false,li,qs:enPick(pool),idx:0,res:[],score:0,qt:[],log:[],newM:0,title:li==null?'🔤 תרגול אנגלית':`🔤 ${EN_LESSONS[li].t}`};show('enquiz');enRender();}
+function startEnExam(){closeModal();const d=enDone();if(!d.length){modal(`<div class="mascot" style="margin:0 auto;width:90px;height:96px">${ROBO}</div><h2>עוד אין מילים במבחן 🙂</h2><p style="font-size:19px">כל מילה שתענה עליה נכון פעמיים (פעם בכל כיוון) תיכנס לכאן. בוא נתרגל!</p><button class="btn green" onclick="closeModal()">יאללה! 👍</button>`);return;}
+  const qs=[];const pool=shuffle(d);for(let i=0;qs.length<Math.min(EN_EXAM,d.length*2);i++){const w=pool[i%pool.length];const dir=i<pool.length?(Math.random()<.5?'eh':'he'):(qs.find(q=>q.w===w).dir==='eh'?'he':'eh');qs.push(enQuestion(w,dir));if(i>200)break;}
+  EQ={exam:true,qs:shuffle(qs),idx:0,res:[],score:0,qt:[],log:[],title:'🎓 מבחן סוף שנה'};show('enquiz');enRender();}
+function enRender(){const q=EQ.qs[EQ.idx];EQ.done=false;tmStart();
+  $('#enqHead').innerHTML=`<div class="qhead"><div class="scorebig">${EQ.exam?'📝':'⭐'} <span class="co">${EQ.exam?EQ.res.filter(Boolean).length:EQ.score}/${EQ.qs.length}</span></div><div class="prog">${EQ.qs.map((_,k)=>{const r=EQ.res[k];return `<span class="${EQ.exam?(r?'ok':k===EQ.idx?'cur':''):r==='st'?'st':r==='x'?'bad':k===EQ.idx?'cur':''}">${EQ.exam?(r?checkSvg:''):r==='st'?starSvg():r==='x'?'✗':''}</span>`;}).join('')}</div></div><div class="qnum" style="margin-top:8px">${EQ.title} · שאלה ${EQ.idx+1} מתוך ${EQ.qs.length}</div>`;
+  const w=q.w;$('#enqPrompt').innerHTML=q.dir==='eh'?`<div class="enask">מה הפירוש של</div><div class="enword" dir="ltr">${w.en} ${speakBtn(w)}</div>`:`<div class="enask">איך אומרים באנגלית</div><div class="enword">${w.he}</div>`;
+  $('#enqOpts').innerHTML=q.opts.map((o,k)=>`<button class="opt enopt" data-k="${k}" ${q.dir==='he'?'dir="ltr"':''}>${o.txt}</button>`).join('');
+  say('#enTalk',EQ.exam?'בחר את התשובה הנכונה. בהצלחה! 🍀':'בחר את התשובה הנכונה 👆','');$('#enNext').style.display='none';
+  bindSpk($('#enqPrompt'));$('#enqOpts').querySelectorAll('.enopt').forEach(b=>b.onclick=()=>enAnswer(+b.dataset.k));
+  if(q.dir==='eh'&&!EQ.exam&&SAVE.enAuto)speak(enSay(w));}
+function enAnswer(k){if(EQ.done)return;EQ.done=true;const q=EQ.qs[EQ.idx],o=q.opts[k],secs=tmStop()/1000;EQ.qt[EQ.idx]=Math.round(secs*10)/10;
+  const bs=[...$('#enqOpts').querySelectorAll('.enopt')];bs.forEach(b=>b.disabled=true);const right=q.opts.find(x=>x.ok);
+  if(o.ok){EQ.score++;EQ.res[EQ.idx]='st';SAVE.qok['en:'+q.w.id]=Date.now();
+    if(!EQ.exam){if(enCredit(q.w.id,q.dir))EQ.newM++;}
+    if(!EQ.exam){bs[k].classList.add('right');sfx('good');say('#enTalk',pick(PRAISE)+(enMastered(q.w.id)&&enW(q.w.id).m>Date.now()-3000?'<br>🎓 המילה <b dir="ltr">'+enSay(q.w)+'</b> עברה למבחן סוף שנה!':''),'happy');}}
+  else{EQ.res[EQ.idx]='x';const r={t:Date.now(),e:{u:'en',key:'en:'+q.w.id,tpl:'en',args:[],lvl:0},en:1,st:EQ.exam?'🎓 מבחן סוף שנה':(q.dir==='eh'?'אנגלית ← עברית':'עברית ← אנגלית'),g:[o.txt],c:right.txt,s:Math.round(secs),pr:q.dir==='eh'?`מה הפירוש של <b dir="ltr">${q.w.en}</b>?`:`איך אומרים באנגלית: <b>${q.w.he}</b>?`,fx:false};
+    const L=mlogOf('en');L.push(r);if(L.length>LOG_CAP)L.splice(0,L.length-LOG_CAP);EQ.log.push(r);persistSafe();
+    if(!EQ.exam){bs[k].classList.add('wrong');bs[q.opts.indexOf(right)].classList.add('right','showright');sfx('bad');say('#enTalk',`לא הפעם 🙂<br>✅ התשובה הנכונה: <b ${q.dir==='he'?'dir="ltr"':''}>${right.txt}</b><br><small>המילה נשארת לתרגול – ננסה שוב בפעם אחרת 💪</small>`,'oops');}}
+  if(EQ.exam){sfx('tick');say('#enTalk','✍️ התשובה נשמרה. ממשיכים!','');}
+  persistSafe();if(!EQ.exam)enRenderHeadOnly();
+  const n=$('#enNext');n.style.display='';n.textContent=EQ.idx===EQ.qs.length-1?'לתוצאה 🏁':'לשאלה הבאה ←';
+  try{const t=$('#enTalk');const rc=t.getBoundingClientRect();if(rc.top<0||rc.bottom>innerHeight)t.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}}
+function enRenderHeadOnly(){const h=$('#enqHead .prog');if(h)h.innerHTML=EQ.qs.map((_,k)=>{const r=EQ.res[k];return `<span class="${r==='st'?'st':r==='x'?'bad':k===EQ.idx?'cur':''}">${r==='st'?starSvg():r==='x'?'✗':''}</span>`;}).join('');const s=$('#enqHead .scorebig .co');if(s)s.textContent=`${EQ.score}/${EQ.qs.length}`;}
+$('#enNext').onclick=()=>{if(!EQ||!EQ.done)return;if(EQ.idx<EQ.qs.length-1){EQ.idx++;enRender();}else enFinish();};
+function enFinish(){const n=EQ.qs.length,c=EQ.score,score=scoreFor(c,n);
+  const a={t:Date.now(),u:'en',m:EQ.exam?'enexam':'en',i:null,c,n,d:Math.round(EQ.qt.reduce((x,y)=>x+(y||0),0)),cs:Math.round(EQ.qs.reduce((s,_,i)=>s+(EQ.res[i]==='st'?EQ.qt[i]||0:0),0)*10)/10};
+  SAVE.att.push(a);if(SAVE.att.length>ATT_CAP)SAVE.att.splice(0,SAVE.att.length-ATT_CAP);
+  let prev=null;if(EQ.exam){const ex=enState().ex;prev=ex.best;ex.n++;if(prev==null||score>prev)ex.best=score;}
+  persistSafe();show('summary');const left=enLeft().length;
+  $('#sumCard').innerHTML=`<div class="qnum" style="font-size:18px">${EQ.title}</div><div class="sumscore" id="sumScore">${EQ.exam?score:c}<small>/${EQ.exam?100:n}</small></div>
+   <div class="rdots">${EQ.res.map(r=>`<i class="${r==='st'?'st':'bad'}"></i>`).join('')}</div>
+   <div class="summsg">${c===n?'מושלם! 🌟':c>=n*.7?'יפה מאוד! 💪':'ממשיכים ללמוד – כל תשובה מקרבת! 🌱'}</div>
+   <div class="sumsub">נכון: <b>${c} מתוך ${n}</b>${EQ.exam?(prev!=null?` · השיא הקודם: <b>${prev}/100</b>${score>prev?' – 🎉 שיא חדש!':''}`:''):`<br>🎓 מילים חדשות שעברו למבחן: <b>${EQ.newM}</b> · 📚 נשארו ללמוד: <b>${left}</b>`}</div>${timeLine(Object.assign({},a,{m:EQ.exam?'exam':'stage'}))}
+   ${EQ.exam&&EQ.log.length?`<div class="exreview"><h3 class="ph3">🔍 בדיקת המבחן – ${EQ.log.length} טעויות</h3>${EQ.log.map((r,i)=>mistakeItem(r,'e'+i)).join('')}</div>`:''}
+   <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">${EQ.exam?'<button class="btn orange" id="enAgain">🔄 עוד מבחן</button>':left?'<button class="btn orange" id="enAgain">▶ עוד תרגול</button>':''}<button class="btn" id="enHome">🔤 לאנגלית</button><button class="btn ghost" id="enP">📈 ההתקדמות שלי</button></div>`;
+  const ex=EQ.exam,li=EQ.li;const ag=$('#enAgain');if(ag)ag.onclick=()=>ex?startEnExam():startEn(li!=null&&enLeft().some(w=>w.li===li)?li:null);
+  $('#enHome').onclick=()=>show('english');$('#enP').onclick=()=>openProgress('en');
+  if(c===n){sfx('win');confetti(3000,180);}else sfx('good');}
+
+enClean();window.__app.EN={EN_WORDS,EN_LESSONS,enW,enLeft,enDone,startEn,startEnExam,enQuestion,get EQ(){return EQ;},enAnswer,setSubject};
+
 /* ============ v8: exams (25 questions, medium+ difficulty, no hints, review at the end) ============ */
 const EXAM_N=25,EXAM_FROM=40;   /* ranks 41-100 of each topic's ranked bank = top 60% (medium & hard) */
 const EXAM_TOPICS=[1,2,3,4,5,6,7,8,'ang'];
@@ -2744,7 +2868,7 @@ function finishExam(){Q.finished=true;document.querySelector('#quiz').classList.
   $('#exAgain').onclick=()=>startExam(E.id);$('#exList').onclick=openExams;$('#toMap').onclick=()=>show('home');
   if(score>=85){sfx('win');confetti(3500,200);}else sfx('good');}
 
-examsClean();persist();renderHome();
+examsClean();persist();renderHome();if(SAVE.subj==='en')show('english');
 
 </script>
 </body>
