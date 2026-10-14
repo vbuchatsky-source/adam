@@ -358,6 +358,11 @@ body{font-family:"Rubik","Varela Round","Segoe UI","Arial Hebrew",Arial,sans-ser
 .hebp{font-size:21px;line-height:1.6;text-align:right}.hebdata{background:#f4f6fb;border-radius:12px;padding:10px;margin-bottom:8px;font-size:18px}
 .hebart{background:#fffdf3;border:2px solid #ffe08a;border-radius:14px;padding:8px 12px;margin-bottom:10px;text-align:right}.hebart summary{font-weight:800;cursor:pointer;font-size:17px}.hebart p{font-size:17px;line-height:1.7;margin:8px 0}.pnum{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#8338ec;color:#fff;font-size:13px}
 .enl.nextl{outline:3px solid var(--gold)}.enl .badge-start{position:static;display:inline-block;margin-bottom:4px}
+/* v12 login/sync */
+#userBtn{position:relative}.syncdot{position:absolute;top:4px;left:4px;width:10px;height:10px;border-radius:50%;background:#c9d1e3}.syncdot.s-ok,.syncdot.s-idle{background:#06d6a0}.syncdot.s-pending,.syncdot.s-saving{background:#ffbe0b}.syncdot.s-offline{background:#8a91a8}.syncdot.s-error{background:#ff4d6d}
+.ltabs{display:flex;gap:8px;justify-content:center;margin:6px 0 10px}.ltab{border:2px solid #d9def0;background:#fff;border-radius:14px;padding:8px 18px;font:inherit;font-weight:800;font-size:17px}.ltab.on{background:#8338ec;color:#fff;border-color:#8338ec}
+.lform{display:flex;flex-direction:column;gap:10px;text-align:right;max-width:340px;margin:0 auto 8px}.lform label{display:flex;flex-direction:column;gap:4px;font-weight:700}.lform input{font:inherit;font-size:20px;padding:10px 12px;border:2px solid #d9def0;border-radius:14px}
+.lerr{color:#e63946;font-weight:700;min-height:1.2em}.syncline{font-size:18px;font-weight:700}
 /* ===== angles side-track ===== */
 .sidetrack{margin:22px 0 8px;padding:14px 12px 16px;border-radius:30px;background:repeating-linear-gradient(45deg,#f3eeff,#f3eeff 14px,#ece5ff 14px,#ece5ff 28px);border:3px dashed #a78bfa}
 .sidehead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0 4px 10px}
@@ -436,6 +441,7 @@ body{font-family:"Rubik","Varela Round","Segoe UI","Arial Hebrew",Arial,sans-ser
   <button class="btn ghost small" id="rulesBtn">📘<span class="rtxt"> תזכורת</span></button>
   <div class="pill" title="כוכבים ויהלומים שאספת"><span id="starIcon"></span><b id="starCount">0</b></div>
   <button class="btn ghost small" id="soundBtn" title="צליל">🔊</button>
+  <button class="btn ghost small" id="userBtn" title="משתמש וסנכרון">👤<span id="syncDot" class="syncdot"></span></button>
 </header>
 
 <!-- HOME / PLAN -->
@@ -614,7 +620,9 @@ SAVE.units=SAVE.units||{};SAVE.lstep=SAVE.lstep||{};
 const MAST_KEYS=['1','2','3','4','5','6','7','8','9','ang'];
 function sgOfRec(r){const a=r&&Array.isArray(r.sg)?r.sg:[];return Array.from({length:13},(_,i)=>a[i]?1:0);}
 function stageTotals(){let s=0,d=0;MAST_KEYS.forEach(k=>{const g=sgOfRec(SAVE.units&&SAVE.units[k]);for(let i=0;i<10;i++)s+=g[i];for(let i=10;i<13;i++)d+=g[i];});return[s,d];}
-function persist(){try{localStorage.setItem(KEY,JSON.stringify(SAVE));}catch(e){} const el=$('#starCount');if(el){const [s,d]=stageTotals();el.textContent=`${s} · ${d}💎`;}}
+let LASTS=null;
+function persist(){let changed=false;try{const t0=SAVE._ts;SAVE._ts=0;const cur=JSON.stringify(SAVE);SAVE._ts=t0;if(LASTS===null)LASTS=cur;else if(cur!==LASTS){LASTS=cur;SAVE._ts=Date.now();changed=true;}}catch(e){}
+  try{localStorage.setItem(KEY,JSON.stringify(SAVE));}catch(e){}if(changed&&window.__onPersist)try{window.__onPersist();}catch(e){} const el=$('#starCount');if(el){const [s,d]=stageTotals();el.textContent=`${s} · ${d}💎`;}}
 function addStars(n){SAVE.stars+=n;persist();const p=$('#starCount').parentElement;p.classList.remove('shake');void p.offsetWidth;p.classList.add('shake');}
 
 /* ============ sound ============ */
@@ -2957,6 +2965,76 @@ function finishExam(){Q.finished=true;document.querySelector('#quiz').classList.
   if(score>=85){sfx('win');confetti(3500,200);}else sfx('good');}
 
 examsClean();persist();renderHome();if(SAVE.subj==='en')show('english');else if(SAVE.subj==='heb')show('hebrew');
+
+/* ============ v12: login + cloud sync (Supabase Auth + PostgREST via plain fetch) ============ */
+const SB_URL='https://tvotclwporavgbgopvyn.supabase.co',SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2b3RjbHdwb3JhdmdiZ29wdnluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5Nzg3MTMsImV4cCI6MjEwNzU1NDcxM30.0NCQ9KPwR7hS7DvaB6HS4dyCPC56mOqg4JJYJZTi42w';
+const AUTH_KEY='adamAuth',DIRTY_KEY='adamSyncDirty',ASKED_KEY='adamLoginAsked',FAKE_DOM='adam-app.example.com';
+let AUTH=null;try{AUTH=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');}catch(e){AUTH=null;}
+let SYNC={state:AUTH?'idle':'off',msg:''},SYNC_T=null,SYNC_BUSY=false;
+const toEmail=n=>{n=String(n||'').trim().toLowerCase();return n.includes('@')?n:n.replace(/[^a-z0-9._-]/g,'')+'@'+FAKE_DOM;};
+const showName=()=>!AUTH?'':(AUTH.email||'').endsWith('@'+FAKE_DOM)?AUTH.email.split('@')[0]:AUTH.email;
+function setAuth(a){AUTH=a;try{if(a)localStorage.setItem(AUTH_KEY,JSON.stringify(a));else localStorage.removeItem(AUTH_KEY);}catch(e){}syncUI();}
+async function sbAuth(path,body){const r=await fetch(SB_URL+'/auth/v1/'+path,{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.msg||j.error_description||j.message||('שגיאה '+r.status));return j;}
+const sessFrom=j=>({at:j.access_token,rt:j.refresh_token,exp:Date.now()+((j.expires_in||3600)-60)*1000,uid:j.user&&j.user.id,email:j.user&&j.user.email});
+async function token(){if(!AUTH)return null;if(Date.now()<AUTH.exp)return AUTH.at;const j=await sbAuth('token?grant_type=refresh_token',{refresh_token:AUTH.rt});setAuth(Object.assign(sessFrom(j),{uid:AUTH.uid,email:AUTH.email}));return AUTH.at;}
+async function rest(method,q,body,extra){const t=await token();const r=await fetch(SB_URL+'/rest/v1/'+q,Object.assign({method,headers:Object.assign({apikey:SB_KEY,Authorization:'Bearer '+t,'Content-Type':'application/json'},(extra&&extra.headers)||{}),body:body?JSON.stringify(body):undefined},extra&&extra.keepalive?{keepalive:true}:{}));if(!r.ok){const j=await r.text();throw new Error('cloud '+r.status+' '+j.slice(0,120));}return r.status===204?null:r.json().catch(()=>null);}
+/* ---------- merge two saves without losing anything ---------- */
+function mergeSaves(A,B){A=A||{};B=B||{};const newer=(+B._ts||0)>(+A._ts||0)?B:A,older=newer===A?B:A;const M=JSON.parse(JSON.stringify(newer));const O=older;
+  const mx=(a,b)=>{const x=+a,y=+b;if(!Number.isFinite(x))return Number.isFinite(y)?y:a;if(!Number.isFinite(y))return x;return Math.max(x,y);};
+  M.stars=mx(M.stars,O.stars);
+  M.units=M.units||{};Object.keys(O.units||{}).forEach(u=>{const o=O.units[u]||{};const m=M.units[u]=M.units[u]||{};
+    m.lesson=!!(m.lesson||o.lesson);m.best=m.best==null?o.best:o.best==null?m.best:Math.max(m.best,o.best);m.n=mx(m.n||0,o.n||0);
+    ['sg','sb','va'].forEach(k=>{const a=Array.isArray(m[k])?m[k]:[],b=Array.isArray(o[k])?o[k]:[];const L=Math.max(a.length,b.length);if(L)m[k]=Array.from({length:L},(_,i)=>k==='sg'?((a[i]||b[i])?1:0):Math.max(+a[i]||0,+b[i]||0));});});
+  M.chal=M.chal||{};Object.keys(O.chal||{}).forEach(u=>{const m=M.chal[u]=M.chal[u]||{};Object.keys(O.chal[u]||{}).forEach(k=>{if(!m[k])m[k]=O.chal[u][k];});});
+  M.mlog=M.mlog||{};Object.keys(O.mlog||{}).forEach(u=>{const seen=new Set((M.mlog[u]||[]).map(r=>r.t+'|'+(r.e&&r.e.key)));const add=(O.mlog[u]||[]).filter(r=>!seen.has(r.t+'|'+(r.e&&r.e.key)));M.mlog[u]=(M.mlog[u]||[]).concat(add).sort((a,b)=>a.t-b.t).slice(-500);});
+  {const seen=new Set((M.att||[]).map(a=>a.t+'|'+a.u+'|'+a.m));M.att=(M.att||[]).concat((O.att||[]).filter(a=>!seen.has(a.t+'|'+a.u+'|'+a.m))).sort((a,b)=>a.t-b.t).slice(-3000);}
+  M.qok=M.qok||{};Object.keys(O.qok||{}).forEach(k=>{M.qok[k]=Math.max(+M.qok[k]||0,+O.qok[k]||0);});
+  M.exams=M.exams||{};Object.keys(O.exams||{}).forEach(k=>{const o=O.exams[k]||{},m=M.exams[k]=M.exams[k]||{best:null,n:0};m.best=m.best==null?o.best:o.best==null?m.best:Math.max(m.best,o.best);m.n=mx(m.n||0,o.n||0);});
+  const mergeEx=(m,o)=>{if(!o)return m;m=m||{best:null,n:0};m.best=m.best==null?o.best:o.best==null?m.best:Math.max(m.best,o.best);m.n=mx(m.n||0,o.n||0);return m;};
+  if(O.en){M.en=M.en||{};M.en.w=M.en.w||{};Object.keys(O.en.w||{}).forEach(k=>{const o=O.en.w[k],m=M.en.w[k]=M.en.w[k]||{eh:0,he:0,m:0};m.eh=mx(m.eh,o.eh);m.he=mx(m.he,o.he);m.m=(+m.m&&+o.m)?Math.min(+m.m,+o.m):(+m.m||+o.m||0);});M.en.ex=mergeEx(M.en.ex,O.en.ex);}
+  if(O.heb){M.heb=M.heb||{};M.heb.q=M.heb.q||{};Object.keys(O.heb.q||{}).forEach(k=>{const o=O.heb.q[k],m=M.heb.q[k]=M.heb.q[k]||{ok:[],m:0};m.ok=[...new Set((m.ok||[]).concat(o.ok||[]))].slice(-4);m.m=(+m.m&&+o.m)?Math.min(+m.m,+o.m):(+m.m||+o.m||0);if(!m.m&&m.ok.length>=2)m.m=Date.now();});M.heb.ex=mergeEx(M.heb.ex,O.heb.ex);}
+  M._ts=Math.max(+A._ts||0,+B._ts||0);return M;}
+function applySave(M){Object.keys(SAVE).forEach(k=>delete SAVE[k]);Object.assign(SAVE,M);try{migrateSave();progClean();examsClean();enClean();hebClean();chalClean();}catch(e){}
+  LASTS=null;persist();const cur=(document.querySelector('.screen.on')||{}).id;if(['home','english','hebrew','unit','exams','progress'].includes(cur)){if(cur==='unit'&&HUB!=null)renderStages();else if(cur==='exams')renderExams();else if(cur==='progress')renderProgress();else show(cur);}}
+/* ---------- sync ---------- */
+function markDirty(){try{localStorage.setItem(DIRTY_KEY,'1');}catch(e){}if(!AUTH)return;clearTimeout(SYNC_T);SYNC_T=setTimeout(()=>cloudPush(),2000);SYNC.state='pending';syncUI();}
+window.__onPersist=markDirty;
+async function cloudPull(){const rows=await rest('GET',`progress?select=data,updated_at&user_id=eq.${AUTH.uid}`);return rows&&rows[0]?rows[0].data:null;}
+async function cloudPush(keep){if(!AUTH||SYNC_BUSY)return;if(!navigator.onLine){SYNC.state='offline';syncUI();return;}SYNC_BUSY=true;SYNC.state='saving';syncUI();
+  try{await rest('POST','progress?on_conflict=user_id',{user_id:AUTH.uid,data:SAVE,updated_at:new Date().toISOString()},{headers:{Prefer:'resolution=merge-duplicates,return=minimal'},keepalive:!!keep});
+    localStorage.removeItem(DIRTY_KEY);SYNC.state='ok';SYNC.at=Date.now();}catch(e){SYNC.state=navigator.onLine?'error':'offline';SYNC.msg=String(e.message||e);}
+  SYNC_BUSY=false;syncUI();}
+async function cloudSyncFull(){if(!AUTH)return;if(!navigator.onLine){SYNC.state='offline';syncUI();return;}SYNC.state='saving';syncUI();
+  try{const remote=await cloudPull();if(remote){const M=mergeSaves(SAVE,remote);applySave(M);}await cloudPush();}catch(e){SYNC.state='error';SYNC.msg=String(e.message||e);syncUI();}}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&AUTH&&localStorage.getItem(DIRTY_KEY)){clearTimeout(SYNC_T);cloudPush(true);}else if(!document.hidden&&AUTH)cloudSyncFull();});
+window.addEventListener('online',()=>{if(AUTH)cloudSyncFull();});
+/* ---------- UI ---------- */
+function syncUI(){const d=$('#syncDot');if(!d)return;const st=AUTH?SYNC.state:'off';d.className='syncdot s-'+st;d.title={off:'לא מחובר',idle:'מחובר',ok:'נשמר בענן ✓',pending:'ממתין לשמירה',saving:'שומר…',offline:'אין אינטרנט – יישמר אחר כך',error:'שגיאה בשמירה'}[st]||'';}
+const SYNC_TXT={off:'לא מחובר',idle:'מחובר',ok:'☁️ הכל שמור בענן',pending:'⏳ ממתין לשמירה…',saving:'⏳ שומר בענן…',offline:'📴 אין אינטרנט – אשמור כשיחזור',error:'⚠️ לא הצלחתי לשמור – אנסה שוב'};
+function userMenu(){if(!AUTH)return loginScreen();
+  modal(`<div class="mascot" style="margin:0 auto;width:80px;height:86px">${ROBO}</div><h2>👤 ${showName()}</h2><p class="syncline" id="syncLine">${SYNC_TXT[SYNC.state]||''}</p><p style="font-size:16px;color:#6b7280">ההתקדמות נשמרת בענן – אפשר להמשיך מכל מכשיר אחרי התחברות.</p>
+   <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn green" id="uSync">🔄 סנכרן עכשיו</button><button class="btn ghost" id="uOut">🚪 התנתק</button><button class="btn ghost" onclick="closeModal()">סגור</button></div>`);
+  $('#uSync').onclick=async()=>{await cloudSyncFull();const l=$('#syncLine');if(l)l.textContent=SYNC_TXT[SYNC.state]||'';};
+  $('#uOut').onclick=async()=>{try{await cloudPush();await fetch(SB_URL+'/auth/v1/logout',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+AUTH.at}});}catch(e){}setAuth(null);SYNC.state='off';closeModal();modal(`<h2>התנתקת 👋</h2><p style="font-size:18px">ההתקדמות שמורה בענן ובמכשיר הזה. אפשר להתחבר שוב מתי שתרצה.</p><button class="btn green" onclick="closeModal()">אוקיי</button>`);};}
+function loginScreen(mode){mode=mode||'in';try{localStorage.setItem(ASKED_KEY,'1');}catch(e){}
+  modal(`<div class="mascot" style="margin:0 auto;width:80px;height:86px">${ROBO}</div><h2>${mode==='in'?'🔑 התחברות':'✨ הרשמה'}</h2>
+   <div class="ltabs"><button class="ltab ${mode==='in'?'on':''}" data-m="in">התחברות</button><button class="ltab ${mode==='up'?'on':''}" data-m="up">הרשמה</button></div>
+   <form id="lForm" class="lform" autocomplete="on"><label>שם משתמש או אימייל<input id="lUser" name="username" autocomplete="username" dir="ltr" required placeholder="adam"></label>
+   <label>סיסמה (לפחות 6 תווים)<input id="lPass" type="password" name="password" autocomplete="${mode==='in'?'current-password':'new-password'}" dir="ltr" required minlength="6"></label>
+   <div class="lerr" id="lErr"></div><button class="btn green" type="submit" id="lGo">${mode==='in'?'היכנס ▶':'צור משתמש ✨'}</button></form>
+   <p style="font-size:15px;color:#6b7280">${mode==='in'?'עוד אין לך משתמש? לחץ על „הרשמה”.':'בוחרים שם משתמש וסיסמה – ואפשר להתחבר מכל מכשיר.'}</p>
+   <button class="btn ghost" id="lSkip">המשך בלי להתחבר</button>`);
+  document.querySelectorAll('.ltab').forEach(b=>b.onclick=()=>loginScreen(b.dataset.m));$('#lSkip').onclick=closeModal;
+  $('#lForm').onsubmit=async e=>{e.preventDefault();const u=$('#lUser').value,p=$('#lPass').value;const err=$('#lErr');err.textContent='';$('#lGo').disabled=true;
+    try{const email=toEmail(u);if(!/^[^@]+@[^@]+\.[^@]+$/.test(email)||email.startsWith('@'))throw new Error('שם משתמש לא תקין (אותיות באנגלית ומספרים)');
+      const j=mode==='up'?await sbAuth('signup',{email,password:p}):await sbAuth('token?grant_type=password',{email,password:p});
+      if(!j.access_token)throw new Error('ההרשמה לא הושלמה');setAuth(sessFrom(j));
+      if(mode==='up')try{await rest('POST','profiles?on_conflict=user_id',{user_id:AUTH.uid,display_name:String(u).split('@')[0]},{headers:{Prefer:'resolution=merge-duplicates,return=minimal'}});}catch(x){}
+      await cloudSyncFull();closeModal();modal(`<div class="mascot mood-happy" style="margin:0 auto;width:90px;height:96px">${ROBO}</div><h2>${mode==='up'?'נרשמת':'התחברת'}, ${showName()}! 🎉</h2><p style="font-size:18px">מעכשיו ההתקדמות שלך נשמרת בענן, ואפשר להמשיך מכל מכשיר.</p><button class="btn green" onclick="closeModal()">יאללה! 👍</button>`);}
+    catch(x){let m=String(x.message||x);if(/Invalid login/i.test(m))m='שם המשתמש או הסיסמה לא נכונים';else if(/already registered|already exists/i.test(m))m='המשתמש הזה כבר קיים – נסה „התחברות”';else if(/Failed to fetch|NetworkError|Load failed/i.test(m))m='אין חיבור לאינטרנט כרגע';else if(/Password/i.test(m))m='הסיסמה צריכה להיות לפחות 6 תווים';err.textContent=m;$('#lGo').disabled=false;}};}
+$('#userBtn').onclick=userMenu;syncUI();
+if(AUTH)cloudSyncFull();else{let asked=null;try{asked=localStorage.getItem(ASKED_KEY);}catch(e){}if(!asked)setTimeout(()=>{if(!document.querySelector('#modal.on'))loginScreen('in');},600);}
+window.__app.CLOUD={mergeSaves,cloudSyncFull,cloudPush,get AUTH(){return AUTH;},get SYNC(){return SYNC;},loginScreen,userMenu,toEmail};
 
 </script>
 </body>
