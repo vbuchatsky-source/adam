@@ -389,6 +389,19 @@ body.arch .allfin::after{content:"✓ הכל כאן הושלם – נמצא בא
 .opt.picked{background:#e7f0ff!important;border-color:#3a86ff!important;box-shadow:0 0 0 3px #3a86ff55}
 .ssx{margin-bottom:6px}
 @media (max-width:520px){.archbar{font-size:15px}.archbar .archbtn{width:100%}}
+/* v17: summary practice */
+.sumlab{display:block;font-weight:900;font-size:18px;margin:14px 0 6px}
+.sumta{width:100%;box-sizing:border-box;font:inherit;font-size:17px;line-height:1.6;border:2px solid #dfe5f3;border-radius:16px;padding:12px;background:#fff;resize:vertical;direction:rtl}
+.sumta:focus{outline:none;border-color:#3a86ff;box-shadow:0 0 0 3px #3a86ff33}
+.sumcnt{color:#6b7280;font-size:14px;margin-top:6px}
+.sumwarn{background:#fff8e6;border:2px dashed #f3d48a;border-radius:16px;padding:12px;margin:12px 0;font-size:17px}
+.sumwait{text-align:center;font-size:18px;padding:16px;animation:pulse 1.2s infinite}
+.sumres{background:#fff;border-radius:22px;padding:16px;box-shadow:0 5px 0 #dfe5f3;margin:14px 0}
+.sumres .sumscore{text-align:center}.sumpraise{font-size:18px;text-align:center}
+.sumbox{border-radius:16px;padding:10px 14px;margin:10px 0}.sumbox h4{margin:0 0 6px;font-size:18px}.sumbox ul{margin:0;padding-inline-start:20px}.sumbox li{margin:4px 0;line-height:1.5}
+.sumbox.idea{background:#f3f7ff}.sumbox.ok{background:#f0fff8}.sumbox.miss{background:#fff8e6}.sumbox.bad{background:#fff0f3}.sumbox.tip{background:#f5f0ff}
+.sumhist{display:grid;gap:8px}.sumh{display:flex;gap:10px;align-items:baseline;background:#fff;border-radius:14px;padding:8px 12px;box-shadow:0 3px 0 #dfe5f3}.sumh small{color:#6b7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.sumscore{font-size:54px;font-weight:900;color:#3a86ff}.sumscore small{font-size:22px;color:#6b7280}
 /* ===== angles side-track ===== */
 .sidetrack{margin:22px 0 8px;padding:14px 12px 16px;border-radius:30px;background:repeating-linear-gradient(45deg,#f3eeff,#f3eeff 14px,#ece5ff 14px,#ece5ff 28px);border:3px dashed #a78bfa}
 .sidehead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0 4px 10px}
@@ -588,6 +601,10 @@ body.arch .allfin::after{content:"✓ הכל כאן הושלם – נמצא בא
  </div>
 </section>
 
+
+<section id="summ" class="screen">
+ <div class="home" id="summBody"></div>
+</section>
 
 <!-- SCIENCE -->
 <section id="science" class="screen">
@@ -2956,9 +2973,9 @@ function makeStageSubject(C){
       <h3 class="stgh">⭐ שלבי כוכב – 7 שאלות, לפי סדר החומר</h3><div class="stgrid">${C.STAGES.filter(S=>S.kind==='star').map(tile).join('')}</div>
       <h3 class="stgh">💎 שלבי יהלום – 10 שאלות ברמת מבחן, בלי רמזים</h3><div class="stgrid dg">${C.STAGES.filter(S=>S.kind==='dia').map(tile).join('')}</div>${TESTS.length?`
       <h3 class="stgh">📝 מבחנים לתרגול <small>כמו מבחן אמיתי: בלי רמזים, התשובות נבדקות רק בסוף, ציון מתוך 100</small></h3><div class="exgrid ssx">${TESTS.map((T,i)=>{const r=trec(T.id);return `<button class="extile mix ${r.best!=null?'fin':''}" data-t="${T.id}"><span class="exnum">${i+1}</span><span class="exb"><b>${T.t}</b><small>${T.src} · ${T.ids.length} שאלות</small><span class="exbest">${r.best==null?'עוד לא נבחנתי':`🏅 השיא שלי: <b>${r.best}/100</b> · ${r.n} ניסיונות`}</span></span></button>`;}).join('')}</div>`:''}
-      <div class="stgacts"><button class="btn chal ${chal().length?'':'zero'}" id="${K}Chal">🔥 היה מאתגר (${chal().length})</button><button class="btn ghost" id="${K}Prog">📈 הטעויות וההתקדמות</button></div>`;
+      <div class="stgacts"><button class="btn chal ${chal().length?'':'zero'}" id="${K}Chal">🔥 היה מאתגר (${chal().length})</button><button class="btn ghost" id="${K}Prog">📈 הטעויות וההתקדמות</button></div>${C.extra?C.extra():''}`;
     const B=$$(C.body);bindSubj(B);B.querySelectorAll('.stg').forEach(b=>b.onclick=()=>start(b.dataset.s));B.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>startTest(b.dataset.t));
-    $$('#'+K+'Chal').onclick=()=>startChal();$$('#'+K+'Prog').onclick=()=>openProgress(K);}
+    $$('#'+K+'Chal').onclick=()=>startChal();if(C.bindExtra)C.bindExtra(B);$$('#'+K+'Prog').onclick=()=>openProgress(K);}
   function begin(o){closeModal();R=Object.assign({idx:0,res:[],score:0,qt:[],log:[]},o);show(C.quiz);draw();}
   function start(sid){const S=C.STAGES.find(x=>x.id===sid);if(!S)return;begin({S,kind:S.kind,qs:shuffle(S.ids.map(i=>ssVariant(BY[i]))),title:`${S.kind==='star'?'⭐':'💎'} ${S.t}`});}
   function startTest(tid){const T=TESTS.find(x=>x.id===tid);if(!T)return;begin({S:null,T,kind:'test',qs:T.ids.map(i=>ssVariant(BY[i])),title:`📝 ${T.t}`});}
@@ -3021,7 +3038,7 @@ function makeStageSubject(C){
 
 const artHTML=()=>`<details class="hebart"><summary>📄 המאמר: ${HEB_ART_TITLE} (לחץ לפתיחה)</summary>${HEB_ART.map((p,i)=>`<p><b class="pnum">${i+1}</b> ${p}</p>`).join('')}</details>`;
 const HEB=makeStageSubject({key:'heb',name:'הבעה',emoji:'✍️',title:'הבעה – הכנה למבחן ✍️',intro:'השלבים בנויים <b>לפי סדר דפי ההכנה והחזרה</b>: רעיון מרכזי, מילות קישור, מאזכרים, אוצר מילים, חזרה, מילים חדשות והמאמר.',
-  STAGES:HEB_STAGES,Q:HEB_Q,screen:'hebrew',quiz:'hebquiz',body:'#hebBody',head:'#hqHead',prompt:'#hqPrompt',opts:'#hqOpts',talk:'#hebTalk',next:'#hebNext',pcls:'hebp',ocls:'hebopt',art:artHTML});
+  STAGES:HEB_STAGES,Q:HEB_Q,screen:'hebrew',quiz:'hebquiz',body:'#hebBody',head:'#hqHead',prompt:'#hqPrompt',opts:'#hqOpts',talk:'#hebTalk',next:'#hebNext',pcls:'hebp',ocls:'hebopt',art:artHTML,extra:()=>sumCardHTML(),bindExtra:B=>sumBind(B)});
 const SCI=makeStageSubject({key:'sci',name:'מדעים',emoji:'🔬',title:'מדעים – הכנה למבחן 🔬',intro:'השלבים בנויים <b>לפי סדר דף החזרה</b>: גוף וחומר, ממה עשוי כל גוף, מוליכות חשמל וחום, מצבי צבירה, מסה ומאזניים.',
   STAGES:SCI_STAGES,TESTS:SCI_TESTS,Q:SCI_Q,screen:'science',quiz:'sciquiz',body:'#sciBody',head:'#sqHead',prompt:'#sqPrompt',opts:'#sqOpts',talk:'#sciTalk',next:'#sciNext',pcls:'scip',ocls:'sciopt'});
 const renderHebrew=()=>HEB.render(),renderScience=()=>SCI.render(),hebClean=()=>HEB.clean(),sciClean=()=>SCI.clean();
@@ -3133,6 +3150,7 @@ function mergeSaves(A,B){A=A||{};B=B||{};const newer=(+B._ts||0)>(+A._ts||0)?B:A
     Object.keys(o.ch||{}).forEach(i=>{const x=+o.ch[i]||0,y=+m.ch[i]||0;m.ch[i]=Math.abs(x)>Math.abs(y)?x:y;});
     if(o.tx){m.tx=m.tx||{};Object.keys(o.tx).forEach(i=>{const a=o.tx[i]||{},r=m.tx[i]=m.tx[i]||{best:null,n:0,last:null};r.best=r.best==null?a.best:a.best==null?r.best:Math.max(r.best,a.best);r.n=mx(r.n||0,a.n||0);if(r.last==null)r.last=a.last;});}});}
   if(M.arch==null&&O.arch!=null)M.arch=O.arch;
+  {const seen=new Set((M.sumx||[]).map(a=>a.t));M.sumx=(M.sumx||[]).concat((O.sumx||[]).filter(a=>!seen.has(a.t))).sort((a,b)=>a.t-b.t).slice(-200);}
   M._ts=Math.max(+A._ts||0,+B._ts||0);return M;}
 function applySave(M){Object.keys(SAVE).forEach(k=>delete SAVE[k]);Object.assign(SAVE,M);try{migrateSave();progClean();examsClean();enClean();hebClean();sciClean();chalClean();}catch(e){}
   LASTS=null;persist();const cur=(document.querySelector('.screen.on')||{}).id;if(['home','english','hebrew','science','unit','exams','progress'].includes(cur)){if(cur==='unit'&&HUB!=null)renderStages();else if(cur==='exams')renderExams();else if(cur==='progress')renderProgress();else show(cur);}}
@@ -3192,6 +3210,48 @@ function loginScreen(mode){mode=mode||'in';try{localStorage.setItem(ASKED_KEY,'1
 $('#userBtn').onclick=userMenu;syncUI();
 handleOAuthReturn().then(done=>{if(done)return;if(AUTH)cloudSyncFull();else{let asked=null;try{asked=localStorage.getItem(ASKED_KEY);}catch(e){}if(!asked)setTimeout(()=>{if(!document.querySelector('#modal.on'))loginScreen('in');},600);}});
 window.__app.CLOUD={mergeSaves,cloudSyncFull,cloudPush,get AUTH(){return AUTH;},get SYNC(){return SYNC;},loginScreen,userMenu,toEmail,googleUrl,handleOAuthReturn};
+
+/* ============ v17: סיכום טקסט – AI feedback via Supabase Edge Function (key stays on the server) ============ */
+const SUM_FN=SB_URL+'/functions/v1/summary-check';
+function sumList(){if(!Array.isArray(SAVE.sumx))SAVE.sumx=[];return SAVE.sumx;}
+const sumEsc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function sumCardHTML(){const L=sumList(),best=L.length?Math.max(...L.map(a=>a.score)):null;
+  return `<div class="extras"><button class="mission big" id="goSumm"><span class="ic" style="font-size:54px;display:grid;place-items:center">📝</span><span><h3>סיכום טקסט – עם משוב חכם</h3><p>מדביקים קטע, כותבים סיכום במילים שלך, ומקבלים משוב: מה תפסת, מה חסר וטיפים. ${L.length?`ניסיונות: <b>${L.length}</b> · השיא: <b class="co">${best}/100</b>`:''}</p></span></button></div>`;}
+function sumBind(B){const b=B.querySelector('#goSumm');if(b)b.onclick=openSumm;}
+let SUMD={text:'',summary:''};
+function openSumm(){closeModal();show('summ');renderSumm();}
+function renderSumm(){const L=sumList().slice().reverse();
+  $('#summBody').innerHTML=`<h1>📝 סיכום טקסט</h1><p class="psub">1️⃣ הדבק את הקטע מהספר או מהדף. 2️⃣ כתוב סיכום <b>במילים שלך</b>: הרעיון המרכזי והנקודות החשובות, בלי פרטים קטנים ובלי דעה. 3️⃣ לחץ „בדוק את הסיכום” ✨</p>
+   ${AUTH?'':'<div class="sumwarn">🔐 כדי לקבל משוב צריך להיות מחובר (כפתור 👤 למעלה).</div>'}
+   <label class="sumlab" for="sumText">📄 הטקסט</label><textarea id="sumText" class="sumta" rows="8" placeholder="הדבק כאן את הטקסט…">${sumEsc(SUMD.text)}</textarea>
+   <label class="sumlab" for="sumMine">✍️ הסיכום שלי</label><textarea id="sumMine" class="sumta" rows="6" placeholder="כתוב כאן את הסיכום שלך…">${sumEsc(SUMD.summary)}</textarea>
+   <div class="sumcnt" id="sumCnt"></div>
+   <div class="stgacts"><button class="btn green" id="sumCheck">✨ בדוק את הסיכום</button><button class="btn ghost" id="sumBack">✍️ להבעה</button></div>
+   <div id="sumOut"></div>
+   ${L.length?`<h3 class="ph3">📈 הסיכומים שלי (${L.length})</h3><div class="sumhist">${L.slice(0,10).map(a=>`<div class="sumh"><b>${a.score}/100</b><span>${new Date(a.t).toLocaleDateString('he-IL')}</span><small>${sumEsc(a.head||'')}</small></div>`).join('')}</div>`:''}`;
+  const t=$('#sumText'),m=$('#sumMine');const cnt=()=>{SUMD.text=t.value;SUMD.summary=m.value;const a=t.value.trim().split(/\s+/).filter(Boolean).length,b=m.value.trim().split(/\s+/).filter(Boolean).length;$('#sumCnt').textContent=`בטקסט: ${a} מילים · בסיכום: ${b} מילים${a&&b?` (${Math.round(b/a*100)}%)`:''}`;};
+  t.oninput=m.oninput=cnt;cnt();$('#sumBack').onclick=()=>show('hebrew');$('#sumCheck').onclick=sumCheck;}
+const SUM_ERR={not_logged_in:'🔐 צריך להתחבר כדי לקבל משוב. לחץ על 👤 למעלה ותתחבר עם Google.',too_short:'✏️ הטקסט או הסיכום קצרים מדי. הדבק טקסט שלם וכתוב לפחות משפט או שניים.',
+  not_configured:'🔌 הבודק החכם עוד לא מחובר. אבא מסדר את זה – בינתיים הסיכום שלך נשמר כאן, נסה שוב מאוחר יותר 🙂',net:'🔌 הבודק החכם עוד לא מחובר או שאין אינטרנט. הסיכום שלך נשאר כאן – נסה שוב מאוחר יותר 🙂'};
+async function sumCheck(){const text=$('#sumText').value.trim(),summary=$('#sumMine').value.trim(),out=$('#sumOut');
+  if(text.length<40||summary.length<10){out.innerHTML=`<div class="sumwarn">${SUM_ERR.too_short}</div>`;return;}
+  if(!AUTH){out.innerHTML=`<div class="sumwarn">${SUM_ERR.not_logged_in}</div>`;return;}
+  const btn=$('#sumCheck');btn.disabled=true;out.innerHTML=`<div class="sumwait">🤖 רובי קורא את הסיכום שלך…</div>`;
+  let res=null,err='net';
+  try{const tk=await token();const r=await fetch(SUM_FN,{method:'POST',headers:{Authorization:'Bearer '+tk,apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({text,summary})});
+    const j=await r.json().catch(()=>({}));if(r.ok&&typeof j.score==='number')res=j;else err=SUM_ERR[j.error]?j.error:'net';}catch(e){err='net';}
+  btn.disabled=false;if(!res){out.innerHTML=`<div class="sumwarn">${SUM_ERR[err]}</div>`;return;}
+  sumList().push({t:Date.now(),score:res.score,tw:text.split(/\s+/).length,sw:summary.split(/\s+/).length,head:text.slice(0,60)});if(SAVE.sumx.length>200)SAVE.sumx.splice(0,SAVE.sumx.length-200);persistSafe();
+  sumShow(res);if(res.score>=85){sfx('win');confetti(2500,150);}else sfx('good');}
+function sumShow(r){const li=(a,ic)=>a&&a.length?`<ul>${a.map(x=>`<li>${ic} ${sumEsc(x)}</li>`).join('')}</ul>`:'';
+  $('#sumOut').innerHTML=`<div class="sumres"><div class="sumscore">${r.score}<small>/100</small></div><p class="sumpraise">🌟 ${sumEsc(r.praise)}</p>
+   ${r.main_idea?`<div class="sumbox idea"><h4>💡 הרעיון המרכזי</h4><p>${sumEsc(r.main_idea)}</p></div>`:''}
+   ${r.captured.length?`<div class="sumbox ok"><h4>✅ מה תפסת</h4>${li(r.captured,'')}</div>`:''}
+   ${r.missing.length?`<div class="sumbox miss"><h4>🧩 מה חסר</h4>${li(r.missing,'')}</div>`:''}
+   ${r.wrong.length?`<div class="sumbox bad"><h4>⚠️ מה לא מדויק</h4>${li(r.wrong,'')}</div>`:''}
+   ${r.tips.length?`<div class="sumbox tip"><h4>🎯 טיפים לפעם הבאה</h4>${li(r.tips,'')}</div>`:''}</div>`;
+  $('#sumOut').scrollIntoView({behavior:'smooth',block:'start'});}
+window.__app.SUMM={openSumm,sumShow,sumCheck};
 
 </script>
 </body>
